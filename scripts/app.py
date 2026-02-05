@@ -11,6 +11,8 @@ from data_loader import (
     get_estados,
     get_municipios,
     get_divisiones,
+    get_tarifas_disponibles,
+    es_tarifa_horaria,
     get_data_stats,
     verificar_match_regiones,
 )
@@ -151,10 +153,62 @@ if estado_seleccionado != "Selecciona un estado" and municipio_seleccionado and 
         )
         st.success(f"📌 **División seleccionada:** {division_seleccionada}")
 
-# Placeholder para siguientes selectores (Tarifa, Año)
+# Selector de Tarifas (HU-1.3) - Selección múltiple
+st.markdown("---")
+st.subheader("⚡ Selector de Tarifas")
+
+tarifas_seleccionadas = []
+if division_seleccionada:
+    # Obtener tarifas disponibles
+    df_tarifas_disp = get_tarifas_disponibles()
+    
+    # Crear opciones con formato "CÓDIGO - Descripción"
+    opciones_tarifa = []
+    tarifa_map = {}  # Para mapear la opción al código
+    for _, row in df_tarifas_disp.iterrows():
+        opcion = f"{row['tarifa']} - {row['descripcion']}"
+        opciones_tarifa.append(opcion)
+        tarifa_map[opcion] = row['tarifa']
+    
+    tarifas_opciones = st.multiselect(
+        "Tarifas de interés",
+        options=opciones_tarifa,
+        default=[],
+        key="selector_tarifas",
+        help="Selecciona una o más tarifas para analizar (puedes elegir varias)"
+    )
+    
+    # Extraer códigos de tarifas seleccionadas
+    if tarifas_opciones:
+        tarifas_seleccionadas = [tarifa_map[op] for op in tarifas_opciones]
+        
+        # Clasificar tarifas seleccionadas
+        horarias = [t for t in tarifas_seleccionadas if es_tarifa_horaria(t)]
+        simples = [t for t in tarifas_seleccionadas if not es_tarifa_horaria(t)]
+        
+        # Mostrar resumen de selección
+        col_info1, col_info2 = st.columns(2)
+        with col_info1:
+            if horarias:
+                st.info(f"⏰ **Horarias:** {', '.join(horarias)}")
+        with col_info2:
+            if simples:
+                st.info(f"📊 **Simples:** {', '.join(simples)}")
+        
+        st.success(f"✅ {len(tarifas_seleccionadas)} tarifa(s) seleccionada(s)")
+else:
+    # Selector deshabilitado si no hay división
+    st.multiselect(
+        "Tarifas de interés",
+        options=["Selecciona primero Estado y Municipio"],
+        disabled=True,
+        key="selector_tarifas_disabled"
+    )
+
+# Placeholder para selector de Año (HU-1.4)
 st.markdown("---")
 st.subheader("🔧 En desarrollo")
-st.info("Los selectores de Tarifa y Año se implementarán en las siguientes historias de usuario (HU-1.3, HU-1.4).")
+st.info("El selector de Año se implementará en la siguiente historia de usuario (HU-1.4).")
 
 # Expandible con detalles de datos
 with st.expander("Ver detalles de los datos"):
@@ -173,4 +227,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v0.3.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v0.4.0 | Desarrollado con Streamlit")

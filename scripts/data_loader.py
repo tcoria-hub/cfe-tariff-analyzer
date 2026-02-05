@@ -159,6 +159,10 @@ def get_divisiones(estado: str, municipio: str) -> List[str]:
     return sorted(divisiones)
 
 
+# Tarifas que tienen estructura horaria (Base, Intermedia, Punta)
+TARIFAS_HORARIAS = {"GDMTH", "DIST", "DIT"}
+
+
 @st.cache_data
 def get_tarifas_disponibles() -> pd.DataFrame:
     """
@@ -171,6 +175,19 @@ def get_tarifas_disponibles() -> pd.DataFrame:
     tarifas = df[["tarifa", "descripcion"]].drop_duplicates()
     tarifas = tarifas.sort_values("tarifa")
     return tarifas
+
+
+def es_tarifa_horaria(tarifa: str) -> bool:
+    """
+    Determina si una tarifa tiene estructura horaria (Base, Intermedia, Punta).
+    
+    Args:
+        tarifa: Código de la tarifa (ej: "GDMTH")
+        
+    Returns:
+        True si es tarifa horaria, False si es tarifa simple
+    """
+    return tarifa.upper() in TARIFAS_HORARIAS
 
 
 @st.cache_data

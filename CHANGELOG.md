@@ -8,6 +8,29 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-1.3: Selector Dinámico de Tarifas
+**Tiempo de ciclo:** ~15 minutos
+
+#### Implementado
+- Sección "⚡ Selector de Tarifas" con `st.multiselect`
+- Formato "CÓDIGO - Descripción" para cada tarifa
+- Clasificación automática: tarifas horarias vs simples
+- Función `es_tarifa_horaria()` y constante `TARIFAS_HORARIAS`
+
+#### Decisiones Clave
+- **Selección múltiple:** `st.multiselect` permite elegir varias tarifas simultáneamente
+
+#### Archivos Modificados
+- `scripts/app.py` - Selector de tarifas
+- `scripts/data_loader.py` - `es_tarifa_horaria()`, `TARIFAS_HORARIAS`
+
+---
+
+### HU-1.2: Selector de Municipio con Mapeo a División
+**Nota:** Implementada junto con HU-1.1 (funcionalidad incluida en el flujo Estado → Municipio → División)
+
+---
+
 ### HU-1.1: Selector de Estado
 **Tiempo de ciclo:** ~20 minutos
 

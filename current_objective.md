@@ -11,14 +11,13 @@
 | HU-0.1   | ~1 hora         | 2026-02-05 |
 | HU-0.2   | ~45 minutos     | 2026-02-05 |
 | HU-1.1   | ~20 minutos     | 2026-02-05 |
+| HU-1.2   | (con HU-1.1)    | 2026-02-05 |
+| HU-1.3   | ~15 minutos     | 2026-02-05 |
 
 ## Progreso del Proyecto
 - ✅ Feature 0: Configuración Inicial y ETL (2/2 historias)
-- 🔄 Feature 1: Selector Geográfico y de Tarifas (1/4 historias)
-
-## Nota
-HU-1.1 adelantó funcionalidad de HU-1.2 (selector de municipio con mapeo a división).
-Considerar si HU-1.2 requiere ajustes o puede marcarse como parcialmente completada.
+- 🔄 Feature 1: Selector Geográfico y de Tarifas (3/4 historias)
+  - Pendiente: HU-1.4 (Selector de Año)
 
 ## Referencias
 - [BACKLOG.md](.spec/BACKLOG.md)

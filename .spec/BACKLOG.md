@@ -119,7 +119,7 @@ Entonces: Ve una lista de 32 estados ordenados alfabéticamente
 
 ---
 
-### ⏳ Historia de Usuario 1.2: Selector de Municipio con Mapeo a División
+### ✅ Historia de Usuario 1.2: Selector de Municipio con Mapeo a División
 
 **Como:** Usuario de la aplicación  
 **Quiero:** Seleccionar mi municipio después de elegir el estado  
@@ -148,7 +148,7 @@ Entonces: El sistema muestra "División: BAJÍO" y almacena esta división para 
 
 ---
 
-### ⏳ Historia de Usuario 1.3: Selector Dinámico de Tarifas
+### ✅ Historia de Usuario 1.3: Selector Dinámico de Tarifas
 
 **Como:** Usuario de la aplicación  
 **Quiero:** Seleccionar el tipo de tarifa que deseo analizar  
@@ -445,8 +445,8 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | 0 | 0.1 | Configuración del Entorno de Desarrollo | ✅ |
 | 0 | 0.2 | Carga y Gestión de Datos desde CSV | ✅ |
 | 1 | 1.1 | Selector de Estado | ✅ |
-| 1 | 1.2 | Selector de Municipio con Mapeo a División | ⏳ |
-| 1 | 1.3 | Selector Dinámico de Tarifas | ⏳ |
+| 1 | 1.2 | Selector de Municipio con Mapeo a División | ✅ |
+| 1 | 1.3 | Selector Dinámico de Tarifas | ✅ |
 | 1 | 1.4 | Selector de Año de Análisis | ⏳ |
 | 2 | 2.1 | KPI de Variación Total Diciembre | ⏳ |
 | 2 | 2.2 | Desglose de Variación por Componente | ⏳ |
