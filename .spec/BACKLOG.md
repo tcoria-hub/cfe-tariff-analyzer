@@ -218,7 +218,7 @@ Entonces: El sistema establece 2024 como año de análisis y 2023 como año de c
 
 ---
 
-### ⏳ Historia de Usuario 2.1: KPI de Variación Total Diciembre
+### ✅ Historia de Usuario 2.1: KPI de Variación Total Diciembre
 
 **Como:** Analista de costos  
 **Quiero:** Ver el porcentaje de variación del total de diciembre año N vs año N-1  
@@ -448,7 +448,7 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | 1 | 1.2 | Selector de Municipio con Mapeo a División | ✅ |
 | 1 | 1.3 | Selector Dinámico de Tarifas | ✅ |
 | 1 | 1.4 | Selector de Año de Análisis | ✅ |
-| 2 | 2.1 | KPI de Variación Total Diciembre | ⏳ |
+| 2 | 2.1 | KPI de Variación Total Diciembre | ✅ |
 | 2 | 2.2 | Desglose de Variación por Componente | ⏳ |
 | 2 | 2.3 | Gráfica Comparativa de Cierres | ⏳ |
 | 3 | 3.1 | KPI de Promedio Anual | ⏳ |

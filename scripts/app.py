@@ -16,6 +16,7 @@ from data_loader import (
     es_tarifa_horaria,
     get_data_stats,
     verificar_match_regiones,
+    calcular_variacion_diciembre,
 )
 
 # Configuración de la página
@@ -244,7 +245,108 @@ if tarifas_seleccionadas:
     with col_res3:
         st.metric("Periodo", f"{anio_seleccionado} vs {anio_comparativo}")
     
-    st.info("🚀 **Próximo paso:** Los análisis y gráficas se implementarán en el Feature 2 (Comparativo Diciembre vs Diciembre)")
+    # KPI de Variación Total Diciembre (HU-2.1)
+    st.markdown("---")
+    st.subheader("📊 Comparativo Diciembre vs Diciembre")
+    st.caption(f"Variación del costo total entre diciembre {anio_comparativo} y diciembre {anio_seleccionado}")
+    
+    # Advertencia si es el año más reciente (puede no tener diciembre)
+    if anio_seleccionado == max(anios):
+        st.warning(f"⚠️ {anio_seleccionado} es el año más reciente. Si no hay datos de diciembre, selecciona un año anterior.")
+    
+    # Mostrar KPIs para cada tarifa seleccionada
+    for tarifa in tarifas_seleccionadas:
+        # Calcular variación
+        resultado = calcular_variacion_diciembre(
+            tarifa=tarifa,
+            region=division_seleccionada,
+            anio_actual=anio_seleccionado,
+            anio_anterior=anio_comparativo
+        )
+        
+        st.markdown(f"#### {tarifa}")
+        
+        if resultado["disponible"]:
+            if resultado["es_horaria"]:
+                # Tarifa horaria: mostrar Base, Intermedia, Punta + Capacidad
+                horarios_info = [
+                    ("B", "Base"),
+                    ("I", "Intermedia"),
+                    ("P", "Punta"),
+                    ("capacidad", "Capacidad"),
+                ]
+                
+                # Crear tabla con datos
+                col_headers = st.columns(5)
+                col_headers[0].markdown("**Concepto**")
+                col_headers[1].markdown(f"**Dic {anio_comparativo}**")
+                col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
+                col_headers[3].markdown("**Variación**")
+                col_headers[4].markdown("**Unidad**")
+                
+                for key, nombre in horarios_info:
+                    datos = resultado["horarios"].get(key, {})
+                    cols = st.columns(5)
+                    
+                    if datos.get("actual") is not None:
+                        anterior = datos.get("anterior")
+                        actual = datos.get("actual")
+                        variacion = datos.get("variacion_pct")
+                        
+                        unidad = "$/kW" if key == "capacidad" else "$/kWh"
+                        
+                        cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
+                        cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
+                        cols[2].write(f"${actual:.4f}")
+                        if variacion is not None:
+                            color = "🔴" if variacion > 0 else "🟢"
+                            cols[3].write(f"{color} {variacion:+.2f}%")
+                        else:
+                            cols[3].write("N/D")
+                        cols[4].write(unidad)
+                    else:
+                        cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
+                        cols[1].write("N/D")
+                        cols[2].write("N/D")
+                        cols[3].write("N/D")
+                        cols[4].write("-")
+            else:
+                # Tarifa simple: mostrar cargo Variable + Capacidad
+                col_headers = st.columns(5)
+                col_headers[0].markdown("**Concepto**")
+                col_headers[1].markdown(f"**Dic {anio_comparativo}**")
+                col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
+                col_headers[3].markdown("**Variación**")
+                col_headers[4].markdown("**Unidad**")
+                
+                for key, nombre, unidad in [("simple", "Variable (Energía)", "$/kWh"), ("capacidad", "Capacidad", "$/kW")]:
+                    datos = resultado["horarios"].get(key, {})
+                    cols = st.columns(5)
+                    
+                    if datos.get("actual") is not None:
+                        anterior = datos.get("anterior")
+                        actual = datos.get("actual")
+                        variacion = datos.get("variacion_pct")
+                        
+                        cols[0].write(f"📊 {nombre}")
+                        cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
+                        cols[2].write(f"${actual:.4f}")
+                        if variacion is not None:
+                            color = "🔴" if variacion > 0 else "🟢"
+                            cols[3].write(f"{color} {variacion:+.2f}%")
+                        else:
+                            cols[3].write("N/D")
+                        cols[4].write(unidad)
+                    else:
+                        cols[0].write(f"📊 {nombre}")
+                        cols[1].write("N/D")
+                        cols[2].write("N/D")
+                        cols[3].write("N/D")
+                        cols[4].write("-")
+        else:
+            st.warning(f"No hay datos de diciembre para {tarifa} en {anio_seleccionado} o {anio_comparativo}")
+        
+        st.markdown("---")
 else:
     # Selector deshabilitado si no hay tarifas
     st.selectbox(
@@ -271,4 +373,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.0.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.1.0 | Desarrollado con Streamlit")

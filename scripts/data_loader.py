@@ -273,3 +273,160 @@ def verificar_match_regiones() -> dict:
         "solo_en_tarifas": list(solo_en_tar),
         "match_exitoso": len(solo_en_geo) == 0 and len(solo_en_tar) == 0
     }
+
+
+def get_cargo_variable_diciembre(tarifa: str, region: str, anio: int, horario: Optional[str] = None) -> Optional[float]:
+    """
+    Obtiene el cargo Variable (Energía) de diciembre para una tarifa, región, año y horario.
+    
+    Args:
+        tarifa: Código de tarifa (ej: "GDMTH")
+        region: Nombre de la región/división (ej: "BAJIO")
+        anio: Año a consultar
+        horario: "B" (Base), "I" (Intermedia), "P" (Punta), o None para tarifas simples
+        
+    Returns:
+        Valor del cargo Variable en pesos/kWh o None si no hay datos
+    """
+    df = load_tarifas()
+    
+    # Normalizar región
+    region_norm = normalizar_texto(region)
+    
+    # Filtrar por tarifa, región, año, mes diciembre y cargo Variable
+    filtro = (
+        (df["tarifa"] == tarifa) &
+        (df["region"] == region_norm) &
+        (df["anio"] == anio) &
+        (df["mes"] == "diciembre") &
+        (df["cargo"].str.contains("Variable", case=False, na=False))
+    )
+    
+    # Agregar filtro de horario si aplica
+    if horario:
+        filtro = filtro & (df["int_horario"] == horario)
+    else:
+        # Para tarifas simples, buscar "sin dato" en int_horario
+        filtro = filtro & (df["int_horario"] == "sin dato")
+    
+    df_filtrado = df[filtro]
+    
+    if df_filtrado.empty:
+        return None
+    
+    # Tomar el valor total del cargo Variable
+    total = df_filtrado["total"].iloc[0]
+    
+    return total if not pd.isna(total) else None
+
+
+def get_cargo_capacidad_diciembre(tarifa: str, region: str, anio: int) -> Optional[float]:
+    """
+    Obtiene el cargo de Capacidad de diciembre para una tarifa, región y año.
+    
+    Args:
+        tarifa: Código de tarifa (ej: "DIST")
+        region: Nombre de la región/división
+        anio: Año a consultar
+        
+    Returns:
+        Valor del cargo Capacidad en pesos/kW o None si no hay datos
+    """
+    df = load_tarifas()
+    
+    # Normalizar región
+    region_norm = normalizar_texto(region)
+    
+    # Filtrar por tarifa, región, año, mes diciembre y cargo Capacidad
+    filtro = (
+        (df["tarifa"] == tarifa) &
+        (df["region"] == region_norm) &
+        (df["anio"] == anio) &
+        (df["mes"] == "diciembre") &
+        (df["cargo"].str.contains("Capacidad", case=False, na=False))
+    )
+    
+    df_filtrado = df[filtro]
+    
+    if df_filtrado.empty:
+        return None
+    
+    total = df_filtrado["total"].iloc[0]
+    
+    return total if not pd.isna(total) else None
+
+
+def get_cargos_diciembre_por_horario(tarifa: str, region: str, anio: int) -> dict:
+    """
+    Obtiene todos los cargos Variable de diciembre para una tarifa horaria.
+    
+    Args:
+        tarifa: Código de tarifa
+        region: Nombre de la región
+        anio: Año a consultar
+        
+    Returns:
+        Diccionario con cargos por horario: {"B": valor, "I": valor, "P": valor, "capacidad": valor}
+        o {"simple": valor, "capacidad": valor} para tarifas sin horario
+    """
+    capacidad = get_cargo_capacidad_diciembre(tarifa, region, anio)
+    
+    if es_tarifa_horaria(tarifa):
+        return {
+            "B": get_cargo_variable_diciembre(tarifa, region, anio, "B"),
+            "I": get_cargo_variable_diciembre(tarifa, region, anio, "I"),
+            "P": get_cargo_variable_diciembre(tarifa, region, anio, "P"),
+            "capacidad": capacidad,
+        }
+    else:
+        return {
+            "simple": get_cargo_variable_diciembre(tarifa, region, anio, None),
+            "capacidad": capacidad,
+        }
+
+
+def calcular_variacion_diciembre(tarifa: str, region: str, anio_actual: int, anio_anterior: int) -> dict:
+    """
+    Calcula la variación porcentual del cargo Variable entre dos diciembres.
+    
+    Para tarifas horarias, retorna variación por cada horario (B, I, P).
+    Para tarifas simples, retorna variación del cargo único.
+    
+    Args:
+        tarifa: Código de tarifa
+        region: Nombre de la región/división
+        anio_actual: Año de análisis
+        anio_anterior: Año de comparación
+        
+    Returns:
+        Diccionario con datos por horario y variaciones
+    """
+    cargos_actual = get_cargos_diciembre_por_horario(tarifa, region, anio_actual)
+    cargos_anterior = get_cargos_diciembre_por_horario(tarifa, region, anio_anterior)
+    
+    resultado = {
+        "tarifa": tarifa,
+        "anio_actual": anio_actual,
+        "anio_anterior": anio_anterior,
+        "es_horaria": es_tarifa_horaria(tarifa),
+        "horarios": {},
+        "disponible": False
+    }
+    
+    # Calcular variación para cada horario/cargo
+    for key in cargos_actual.keys():
+        actual = cargos_actual.get(key)
+        anterior = cargos_anterior.get(key)
+        
+        variacion = None
+        if actual is not None and anterior is not None and anterior != 0:
+            variacion = ((actual / anterior) - 1) * 100
+            resultado["disponible"] = True
+        
+        resultado["horarios"][key] = {
+            "actual": actual,
+            "anterior": anterior,
+            "variacion_pct": variacion
+        }
+    
+    return resultado

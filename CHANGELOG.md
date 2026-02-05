@@ -8,6 +8,29 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-2.1: KPI de Variación Total Diciembre
+**Tiempo de ciclo:** ~1 hora
+
+#### Implementado
+- Sección "📊 Comparativo Diciembre vs Diciembre" con tabla comparativa
+- Columnas: Concepto, Dic Año Anterior, Dic Año Actual, Variación %, Unidad
+- Desglose por horario (Base, Intermedia, Punta) para tarifas horarias
+- Cargo de Capacidad ($/kW) para todas las tarifas
+- Indicadores visuales de variación (🔴 incremento, 🟢 decremento)
+- Warning cuando el año seleccionado puede no tener diciembre completo
+- Validación contra datos de Excel/Power BI (DIST, Baja California Sur)
+
+#### Decisiones Clave
+- **Cargo específico "Variable (Energía)":** Solo se muestra en $/kWh, sin sumar cargos con unidades diferentes
+- **Tabla vs Métricas:** Formato tabular para mostrar año anterior y actual lado a lado
+- **Capacidad separada:** Se incluye como concepto adicional en $/kW
+
+#### Archivos Modificados
+- `scripts/data_loader.py` - Nuevas funciones: `get_cargo_variable_diciembre()`, `get_cargo_capacidad_diciembre()`, `get_cargos_diciembre_por_horario()`
+- `scripts/app.py` - Nueva sección de comparativo diciembre
+
+---
+
 ### HU-1.4: Selector de Año de Análisis
 **Tiempo de ciclo:** ~10 minutos
 
