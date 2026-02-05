@@ -12,6 +12,7 @@ from data_loader import (
     get_municipios,
     get_divisiones,
     get_tarifas_disponibles,
+    get_anios_disponibles,
     es_tarifa_horaria,
     get_data_stats,
     verificar_match_regiones,
@@ -205,10 +206,53 @@ else:
         key="selector_tarifas_disabled"
     )
 
-# Placeholder para selector de Año (HU-1.4)
+# Selector de Año (HU-1.4)
 st.markdown("---")
-st.subheader("🔧 En desarrollo")
-st.info("El selector de Año se implementará en la siguiente historia de usuario (HU-1.4).")
+st.subheader("📅 Selector de Año")
+
+anio_seleccionado = None
+anio_comparativo = None
+
+if tarifas_seleccionadas:
+    # Obtener años disponibles (ya filtrados desde 2018)
+    anios = get_anios_disponibles()
+    
+    # Selector de año con el más reciente como default
+    anio_seleccionado = st.selectbox(
+        "Año de análisis",
+        options=anios,
+        index=len(anios) - 1,  # Último año como default
+        key="selector_anio",
+        help="Selecciona el año que deseas analizar. Se comparará con el año anterior."
+    )
+    
+    # Calcular año comparativo
+    anio_comparativo = anio_seleccionado - 1
+    
+    # Mostrar información de comparación
+    st.success(f"📊 **Análisis:** {anio_seleccionado} vs {anio_comparativo}")
+    
+    # Resumen de selección completa
+    st.markdown("---")
+    st.subheader("✅ Resumen de Selección")
+    
+    col_res1, col_res2, col_res3 = st.columns(3)
+    with col_res1:
+        st.metric("División", division_seleccionada)
+    with col_res2:
+        st.metric("Tarifas", f"{len(tarifas_seleccionadas)} seleccionada(s)")
+    with col_res3:
+        st.metric("Periodo", f"{anio_seleccionado} vs {anio_comparativo}")
+    
+    st.info("🚀 **Próximo paso:** Los análisis y gráficas se implementarán en el Feature 2 (Comparativo Diciembre vs Diciembre)")
+else:
+    # Selector deshabilitado si no hay tarifas
+    st.selectbox(
+        "Año de análisis",
+        options=["Selecciona primero las tarifas"],
+        disabled=True,
+        key="selector_anio_disabled"
+    )
 
 # Expandible con detalles de datos
 with st.expander("Ver detalles de los datos"):
@@ -227,4 +271,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v0.4.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.0.0 | Desarrollado con Streamlit")

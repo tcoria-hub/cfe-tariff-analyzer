@@ -8,6 +8,28 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-1.4: Selector de Año de Análisis
+**Tiempo de ciclo:** ~10 minutos
+
+#### Implementado
+- Sección "📅 Selector de Año" con años disponibles (2018-2025)
+- Cálculo automático de año comparativo (año - 1)
+- Resumen de selección completa (División, Tarifas, Periodo)
+- Versión actualizada a v1.0.0
+
+#### Decisiones Clave
+- **Default al año más reciente:** Selector inicia con último año disponible
+
+#### Archivos Modificados
+- `scripts/app.py` - Selector de año y resumen
+
+---
+
+### 🎉 FEATURE 1 COMPLETADO
+Feature 1 "Selector Geográfico y de Tarifas" 100% implementado (4/4 historias)
+
+---
+
 ### HU-1.3: Selector Dinámico de Tarifas
 **Tiempo de ciclo:** ~15 minutos
 

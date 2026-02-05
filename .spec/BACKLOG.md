@@ -6,7 +6,7 @@
 ## Estado del Proyecto
 
 - ⏳ Feature 0: Configuración Inicial y ETL
-- ⏳ Feature 1: Selector Geográfico y de Tarifas
+- ✅ Feature 1: Selector Geográfico y de Tarifas
 - ⏳ Feature 2: Comparativo Diciembre vs Diciembre
 - ⏳ Feature 3: Análisis de Promedio Anual e Inteligencia Horaria
 
@@ -177,7 +177,7 @@ Entonces: Ve una lista de tarifas con formato "CÓDIGO - Descripción"
 
 ---
 
-### ⏳ Historia de Usuario 1.4: Selector de Año de Análisis
+### ✅ Historia de Usuario 1.4: Selector de Año de Análisis
 
 **Como:** Usuario de la aplicación  
 **Quiero:** Seleccionar el año que deseo analizar  
@@ -447,7 +447,7 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | 1 | 1.1 | Selector de Estado | ✅ |
 | 1 | 1.2 | Selector de Municipio con Mapeo a División | ✅ |
 | 1 | 1.3 | Selector Dinámico de Tarifas | ✅ |
-| 1 | 1.4 | Selector de Año de Análisis | ⏳ |
+| 1 | 1.4 | Selector de Año de Análisis | ✅ |
 | 2 | 2.1 | KPI de Variación Total Diciembre | ⏳ |
 | 2 | 2.2 | Desglose de Variación por Componente | ⏳ |
 | 2 | 2.3 | Gráfica Comparativa de Cierres | ⏳ |
