@@ -44,24 +44,37 @@
 
 ---
 
-### ⏳ Historia de Usuario 0.2: Carga de Datos a Supabase (ETL)
+### ✅ Historia de Usuario 0.2: Carga y Gestión de Datos desde CSV
 
 **Como:** Desarrollador  
-**Quiero:** Cargar los CSVs de catálogo y tarifas a Supabase  
-**Para poder:** Tener una fuente de datos persistente y consultable
+**Quiero:** Implementar la carga de datos desde archivos CSV locales  
+**Para poder:** Tener los datos disponibles en la aplicación sin dependencias externas
 
 #### Criterios de Aceptación
 
-1. Existe tabla `dim_geografia` con columnas: estado, municipio, division
-2. Existe tabla `fact_tarifas` con columnas: anio, mes, tarifa, descripcion, int_horario, cargo, unidades, region, transmision, distribucion, cenace, suministro, scnmem, generacion, capacidad, total
-3. Los nombres de regiones están normalizados (case-insensitive match entre tablas)
-4. El script `upload_data.py` es idempotente (puede ejecutarse múltiples veces sin duplicar)
+1. La app carga automáticamente `data/01_catalogo_regiones.csv` al iniciar
+2. La app carga automáticamente `data/02_tarifas_finales_suministro_basico.csv` al iniciar
+3. Los nombres de regiones están normalizados (UPPER CASE para match consistente)
+4. Existe un módulo `scripts/data_loader.py` con funciones reutilizables para carga de datos
+5. Los DataFrames se cachean con `@st.cache_data` para optimizar rendimiento
 
 #### Casos de Prueba
 
-- **CP-0.2.1:** Consultar `dim_geografia` retorna ~2,600 registros
-- **CP-0.2.2:** Consultar `fact_tarifas` retorna todos los registros del CSV
-- **CP-0.2.3:** Join entre tablas por division/region funciona correctamente
+- **CP-0.2.1:** Al iniciar la app, se cargan ~2,600 registros de geografía
+- **CP-0.2.2:** Al iniciar la app, se cargan todos los registros de tarifas (~62,000+)
+- **CP-0.2.3:** El join entre geografía y tarifas por division/region funciona correctamente
+
+#### Notas de Arquitectura (Decisión 2026-02-05)
+
+> **Cambio de arquitectura:** Se eliminó Supabase del stack.
+> 
+> **Razón:** Simplificar despliegue y evitar costos. La usuaria final actualizará 
+> datos subiendo un nuevo CSV mensualmente.
+> 
+> **Nueva arquitectura:**
+> - Datos: CSVs en repositorio + `st.file_uploader` para actualizaciones
+> - Despliegue: Streamlit Cloud (gratuito)
+> - Persistencia: Los CSVs actualizados se guardan en el repo vía PR o manual
 
 ---
 
@@ -430,7 +443,7 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | Feature | HU | Título | Estado |
 |---------|-----|--------|--------|
 | 0 | 0.1 | Configuración del Entorno de Desarrollo | ✅ |
-| 0 | 0.2 | Carga de Datos a Supabase (ETL) | ⏳ |
+| 0 | 0.2 | Carga y Gestión de Datos desde CSV | ✅ |
 | 1 | 1.1 | Selector de Estado | ⏳ |
 | 1 | 1.2 | Selector de Municipio con Mapeo a División | ⏳ |
 | 1 | 1.3 | Selector Dinámico de Tarifas | ⏳ |

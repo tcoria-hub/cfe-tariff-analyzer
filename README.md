@@ -16,7 +16,7 @@ Esta herramienta permite a usuarios finales y analistas:
 - **Streamlit** - Framework web para dashboards
 - **Pandas** - Procesamiento y análisis de datos
 - **Plotly Express** - Visualizaciones interactivas
-- **Supabase** - Base de datos PostgreSQL en la nube
+- **Streamlit Cloud** - Despliegue gratuito
 
 ## Instalación
 
@@ -31,10 +31,6 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Instalar dependencias
 pip install -r requirements.txt
-
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con credenciales de Supabase
 ```
 
 ## Uso

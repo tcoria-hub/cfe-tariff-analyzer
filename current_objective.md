@@ -9,6 +9,10 @@
 | Historia | Tiempo de Ciclo | Fecha |
 |----------|-----------------|-------|
 | HU-0.1   | ~1 hora         | 2026-02-05 |
+| HU-0.2   | ~45 minutos     | 2026-02-05 |
+
+## Feature 0: Configuración Inicial y ETL
+✅ **COMPLETADO** - Ambas historias finalizadas
 
 ## Referencias
 - [BACKLOG.md](.spec/BACKLOG.md)

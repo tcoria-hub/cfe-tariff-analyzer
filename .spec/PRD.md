@@ -30,9 +30,11 @@ Desarrollar una aplicación web interactiva que automatice el análisis de tarif
     * **Gráfica de Tendencia:** Línea de tiempo (Ene-Dic) que compara visualmente ambos años.
 
 ## 4. Lineamientos Técnicos
-* **Stack:** Python (Pandas + Streamlit).
-* **Persistencia:** Supabase (PostgreSQL) para almacenamiento de tablas de hechos (tarifas) y dimensiones (geografía).
-* **Integración:** El sistema debe normalizar los nombres de las regiones/divisiones entre ambos conjuntos de datos (case sensitivity y acentos).
+* **Stack:** Python (Pandas + Streamlit + Plotly).
+* **Persistencia:** Archivos CSV en el repositorio. Sin base de datos externa.
+* **Despliegue:** Streamlit Cloud (gratuito, conectado a GitHub).
+* **Actualización de datos:** La usuaria puede subir un nuevo CSV de tarifas mensualmente vía `st.file_uploader`.
+* **Integración:** El sistema normaliza los nombres de las regiones/divisiones (UPPER CASE) para match consistente.
 
 ## 5. Criterios de Aceptación
 1. El usuario puede llegar a sus datos de tarifa con máximo 3 clics (Estado > Municipio > Tarifa).
