@@ -1,0 +1,4 @@
+# Scripts de Python
+# Este directorio contiene los scripts de la aplicación:
+# - upload_data.py (ETL para Supabase)
+# - app.py (Aplicación Streamlit)

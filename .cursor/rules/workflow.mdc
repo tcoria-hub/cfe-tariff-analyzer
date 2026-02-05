@@ -1,0 +1,37 @@
+---
+description: Workflow de desarrollo con historias de usuario para CFE Tariff Analyzer
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Comandos de Workflow
+
+Este proyecto utiliza un flujo de trabajo basado en Historias de Usuario. Los comandos disponibles son:
+
+## @start-objective [HU-X.X]
+Inicia trabajo en una Historia de Usuario.
+- Lee las instrucciones completas en `.spec/commands/start_objective.md`
+- Genera `current_objective.md` con contexto, tareas y prompt
+- Registra fecha/hora de inicio para métricas de tiempo de ciclo
+
+## @finish-objective
+Finaliza y archiva una Historia de Usuario completada.
+- Lee las instrucciones completas en `.spec/commands/finish_objective.md`
+- Genera resumen AI de decisiones y cambios
+- Calcula tiempo de ciclo (inicio → fin)
+- Archiva en `.spec/history/` y actualiza CHANGELOG.md
+
+## @generate-story-cards [FEATURE_NUM]
+Genera story-cards desde el BACKLOG.md.
+- Lee las instrucciones completas en `.spec/commands/generate_story_cards.md`
+- Crea archivos en `.spec/story-cards/`
+
+## Estructura del Proyecto
+- `.spec/BACKLOG.md` - Backlog con Features e Historias de Usuario
+- `.spec/PRD.md` - Product Requirements Document
+- `.spec/TECH_SPEC.md` - Especificación técnica
+- `current_objective.md` - Objetivo de trabajo activo
+- `CHANGELOG.md` - Historial de cambios
+
+## Stack Tecnológico
+- Python 3.10+ / Streamlit / Pandas / Plotly / Supabase
