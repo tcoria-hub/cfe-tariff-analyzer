@@ -8,6 +8,26 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-1.1: Selector de Estado
+**Tiempo de ciclo:** ~20 minutos
+
+#### Implementado
+- Sección "📍 Selector Geográfico" con selectores Estado → Municipio → División
+- Selector de Estado con 32 opciones ordenadas alfabéticamente + placeholder
+- Selector de Municipio dinámico filtrado por estado seleccionado
+- Selector de División cuando un municipio tiene múltiples opciones (ej: CDMX)
+- Nueva función `get_divisiones()` en `data_loader.py`
+
+#### Decisiones Clave
+- **Múltiples divisiones:** Algunos municipios pertenecen a 2+ divisiones CFE → selector adicional
+- **UX progresivo:** Selectores se habilitan conforme se completa la selección anterior
+
+#### Archivos Modificados
+- `scripts/app.py` - Selectores geográficos
+- `scripts/data_loader.py` - Nueva función `get_divisiones()`
+
+---
+
 ### HU-0.2: Carga y Gestión de Datos desde CSV
 **Tiempo de ciclo:** ~45 minutos
 

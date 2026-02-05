@@ -90,7 +90,7 @@
 
 ---
 
-### ⏳ Historia de Usuario 1.1: Selector de Estado
+### ✅ Historia de Usuario 1.1: Selector de Estado
 
 **Como:** Usuario de la aplicación  
 **Quiero:** Seleccionar mi estado de la República Mexicana  
@@ -444,7 +444,7 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 |---------|-----|--------|--------|
 | 0 | 0.1 | Configuración del Entorno de Desarrollo | ✅ |
 | 0 | 0.2 | Carga y Gestión de Datos desde CSV | ✅ |
-| 1 | 1.1 | Selector de Estado | ⏳ |
+| 1 | 1.1 | Selector de Estado | ✅ |
 | 1 | 1.2 | Selector de Municipio con Mapeo a División | ⏳ |
 | 1 | 1.3 | Selector Dinámico de Tarifas | ⏳ |
 | 1 | 1.4 | Selector de Año de Análisis | ⏳ |

@@ -9,6 +9,8 @@ from data_loader import (
     load_geografia,
     load_tarifas,
     get_estados,
+    get_municipios,
+    get_divisiones,
     get_data_stats,
     verificar_match_regiones,
 )
@@ -82,10 +84,77 @@ else:
     if match_info["solo_en_tarifas"]:
         st.caption(f"Solo en tarifas: {', '.join(match_info['solo_en_tarifas'])}")
 
-# Placeholder para los selectores (se implementarán en HU-1.x)
+# Selectores Geográficos (Feature 1: Smart Locator)
+st.markdown("---")
+st.subheader("📍 Selector Geográfico")
+
+# Obtener lista de estados
+estados = get_estados()
+
+# Selector de Estado
+col_estado, col_municipio = st.columns(2)
+
+with col_estado:
+    # Agregar placeholder al inicio de la lista
+    opciones_estado = ["Selecciona un estado"] + estados
+    
+    estado_seleccionado = st.selectbox(
+        "Estado",
+        options=opciones_estado,
+        index=0,
+        key="selector_estado",
+        help="Selecciona tu estado para filtrar municipios"
+    )
+
+with col_municipio:
+    # El selector de municipio depende del estado seleccionado
+    if estado_seleccionado != "Selecciona un estado":
+        municipios = get_municipios(estado_seleccionado)
+        opciones_municipio = ["Selecciona un municipio"] + municipios
+        
+        municipio_seleccionado = st.selectbox(
+            "Municipio",
+            options=opciones_municipio,
+            index=0,
+            key="selector_municipio",
+            help="Selecciona tu municipio para identificar la División CFE"
+        )
+    else:
+        # Selector deshabilitado si no hay estado
+        st.selectbox(
+            "Municipio",
+            options=["Selecciona primero un estado"],
+            disabled=True,
+            key="selector_municipio_disabled"
+        )
+        municipio_seleccionado = None
+
+# Mostrar selector de División si hay municipio seleccionado
+division_seleccionada = None
+if estado_seleccionado != "Selecciona un estado" and municipio_seleccionado and municipio_seleccionado != "Selecciona un municipio":
+    divisiones = get_divisiones(estado_seleccionado, municipio_seleccionado)
+    
+    if len(divisiones) == 0:
+        st.warning("No se encontró división para esta combinación")
+    elif len(divisiones) == 1:
+        # Solo una división: mostrar directamente
+        division_seleccionada = divisiones[0]
+        st.success(f"📌 **División CFE:** {division_seleccionada}")
+    else:
+        # Múltiples divisiones: mostrar selector
+        st.info(f"📍 Este municipio pertenece a **{len(divisiones)} divisiones** de CFE. Selecciona una:")
+        division_seleccionada = st.selectbox(
+            "División CFE",
+            options=divisiones,
+            key="selector_division",
+            help="Selecciona la división que corresponde a tu ubicación exacta"
+        )
+        st.success(f"📌 **División seleccionada:** {division_seleccionada}")
+
+# Placeholder para siguientes selectores (Tarifa, Año)
 st.markdown("---")
 st.subheader("🔧 En desarrollo")
-st.info("Los selectores de Estado, Municipio y Tarifa se implementarán en las siguientes historias de usuario.")
+st.info("Los selectores de Tarifa y Año se implementarán en las siguientes historias de usuario (HU-1.3, HU-1.4).")
 
 # Expandible con detalles de datos
 with st.expander("Ver detalles de los datos"):
@@ -104,4 +173,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v0.2.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v0.3.0 | Desarrollado con Streamlit")

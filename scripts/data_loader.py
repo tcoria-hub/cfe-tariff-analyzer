@@ -120,6 +120,7 @@ def get_municipios(estado: str) -> List[str]:
 def get_division(estado: str, municipio: str) -> Optional[str]:
     """
     Obtiene la división de CFE correspondiente a un estado y municipio.
+    Si hay múltiples divisiones, retorna la primera.
     
     Args:
         estado: Nombre del estado (se normaliza automáticamente)
@@ -128,17 +129,34 @@ def get_division(estado: str, municipio: str) -> Optional[str]:
     Returns:
         Nombre de la división o None si no se encuentra
     """
+    divisiones = get_divisiones(estado, municipio)
+    if divisiones:
+        return divisiones[0]
+    return None
+
+
+@st.cache_data
+def get_divisiones(estado: str, municipio: str) -> List[str]:
+    """
+    Obtiene TODAS las divisiones de CFE para un estado y municipio.
+    Algunos municipios pertenecen a múltiples divisiones.
+    
+    Args:
+        estado: Nombre del estado (se normaliza automáticamente)
+        municipio: Nombre del municipio (se normaliza automáticamente)
+        
+    Returns:
+        Lista de divisiones ordenadas alfabéticamente (puede tener 1 o más)
+    """
     df = load_geografia()
     estado_norm = normalizar_texto(estado)
     municipio_norm = normalizar_texto(municipio)
-    result = df[
+    divisiones = df[
         (df["estado"] == estado_norm) & 
         (df["municipio"] == municipio_norm)
-    ]["division"]
+    ]["division"].unique().tolist()
     
-    if len(result) > 0:
-        return result.iloc[0]
-    return None
+    return sorted(divisiones)
 
 
 @st.cache_data
