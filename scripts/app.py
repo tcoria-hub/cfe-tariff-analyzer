@@ -5,6 +5,8 @@ Análisis interactivo de tarifas de CFE por ubicación geográfica.
 """
 
 import streamlit as st
+import plotly.express as px
+import pandas as pd
 from data_loader import (
     load_geografia,
     load_tarifas,
@@ -343,6 +345,130 @@ if tarifas_seleccionadas:
                         cols[2].write("N/D")
                         cols[3].write("N/D")
                         cols[4].write("-")
+            # Gráfica comparativa (HU-2.3)
+            st.markdown("##### 📊 Gráfica Comparativa")
+            
+            # Preparar datos separados por unidad
+            datos_kwh = []  # Variable (Energía) en $/kWh
+            datos_kw = []   # Capacidad en $/kW
+            
+            for key, datos_cargo in resultado["horarios"].items():
+                if datos_cargo.get("actual") is not None or datos_cargo.get("anterior") is not None:
+                    # Nombre del concepto y clasificación por unidad
+                    if key == "B":
+                        concepto = "Base"
+                        es_capacidad = False
+                    elif key == "I":
+                        concepto = "Intermedia"
+                        es_capacidad = False
+                    elif key == "P":
+                        concepto = "Punta"
+                        es_capacidad = False
+                    elif key == "capacidad":
+                        concepto = "Capacidad"
+                        es_capacidad = True
+                    elif key == "simple":
+                        concepto = "Variable"
+                        es_capacidad = False
+                    else:
+                        concepto = key
+                        es_capacidad = False
+                    
+                    lista_destino = datos_kw if es_capacidad else datos_kwh
+                    
+                    # Agregar datos del año anterior
+                    if datos_cargo.get("anterior") is not None:
+                        lista_destino.append({
+                            "Concepto": concepto,
+                            "Año": str(anio_comparativo),
+                            "Valor": datos_cargo["anterior"]
+                        })
+                    
+                    # Agregar datos del año actual
+                    if datos_cargo.get("actual") is not None:
+                        lista_destino.append({
+                            "Concepto": concepto,
+                            "Año": str(anio_seleccionado),
+                            "Valor": datos_cargo["actual"]
+                        })
+            
+            # Colores consistentes
+            colores = {
+                str(anio_comparativo): "#636EFA",  # Azul para año anterior
+                str(anio_seleccionado): "#EF553B"   # Rojo para año actual
+            }
+            
+            # Crear columnas para las gráficas
+            tiene_kwh = len(datos_kwh) > 0
+            tiene_kw = len(datos_kw) > 0
+            
+            if tiene_kwh and tiene_kw:
+                col_kwh, col_kw = st.columns([3, 1])
+            elif tiene_kwh:
+                col_kwh = st.container()
+                col_kw = None
+            elif tiene_kw:
+                col_kwh = None
+                col_kw = st.container()
+            else:
+                col_kwh = None
+                col_kw = None
+            
+            # Gráfica de Variable ($/kWh)
+            if tiene_kwh and col_kwh:
+                with col_kwh:
+                    df_kwh = pd.DataFrame(datos_kwh)
+                    fig_kwh = px.bar(
+                        df_kwh,
+                        x="Concepto",
+                        y="Valor",
+                        color="Año",
+                        barmode="group",
+                        title="Variable ($/kWh)",
+                        color_discrete_map=colores,
+                        text_auto=".2f"
+                    )
+                    fig_kwh.update_layout(
+                        yaxis_title="$/kWh",
+                        xaxis_title="",
+                        legend_title="Año",
+                        height=350,
+                        margin=dict(t=40, b=40)
+                    )
+                    fig_kwh.update_traces(
+                        hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>"
+                    )
+                    st.plotly_chart(fig_kwh, use_container_width=True)
+            
+            # Gráfica de Capacidad ($/kW)
+            if tiene_kw and col_kw:
+                with col_kw:
+                    df_kw = pd.DataFrame(datos_kw)
+                    fig_kw = px.bar(
+                        df_kw,
+                        x="Concepto",
+                        y="Valor",
+                        color="Año",
+                        barmode="group",
+                        title="Capacidad ($/kW)",
+                        color_discrete_map=colores,
+                        text_auto=".2f"
+                    )
+                    fig_kw.update_layout(
+                        yaxis_title="$/kW",
+                        xaxis_title="",
+                        legend_title="Año",
+                        height=350,
+                        margin=dict(t=40, b=40),
+                        showlegend=False  # Ya está en la otra gráfica
+                    )
+                    fig_kw.update_traces(
+                        hovertemplate="<b>%{x}</b><br>$%{y:.2f}/kW<extra></extra>"
+                    )
+                    st.plotly_chart(fig_kw, use_container_width=True)
+            
+            if not tiene_kwh and not tiene_kw:
+                st.info("No hay datos suficientes para generar la gráfica")
         else:
             st.warning(f"No hay datos de diciembre para {tarifa} en {anio_seleccionado} o {anio_comparativo}")
         
@@ -373,4 +499,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.1.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.2.0 | Desarrollado con Streamlit")

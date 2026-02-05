@@ -8,6 +8,25 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-2.3: Gráfica Comparativa de Cierres
+**Tiempo de ciclo:** ~1 hora
+
+#### Implementado
+- Gráfica de barras agrupadas con Plotly Express para comparar dic año N vs año N-1
+- Dos gráficas separadas por unidad: Variable ($/kWh) y Capacidad ($/kW)
+- Colores distintivos: Azul (año anterior), Rojo (año actual)
+- Hover interactivo con valores exactos
+- Etiquetas de valores sobre cada barra
+
+#### Decisiones Clave
+- **Gráficas separadas**: Para evitar escalas incompatibles ($/kWh ~$2 vs $/kW ~$400)
+- **Proporción 3:1**: Variable ocupa más espacio por tener más conceptos
+
+#### Archivos Modificados
+- `scripts/app.py` - Gráfica comparativa con Plotly Express, versión v1.2.0
+
+---
+
 ### HU-2.1: KPI de Variación Total Diciembre
 **Tiempo de ciclo:** ~1 hora
 
