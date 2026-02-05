@@ -8,7 +8,7 @@
 ## Métricas Acumuladas
 | Historia | Tiempo de Ciclo | Fecha |
 |----------|-----------------|-------|
-| (ninguna) | - | - |
+| HU-0.1   | ~1 hora         | 2026-02-05 |
 
 ## Referencias
 - [BACKLOG.md](.spec/BACKLOG.md)

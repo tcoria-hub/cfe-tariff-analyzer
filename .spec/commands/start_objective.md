@@ -32,8 +32,8 @@ Comando: @start-objective [HU-X.X]
 > **Estado:** 🔄 En progreso
 
 ## Métricas de Tiempo
-- **Fecha inicio:** YYYY-MM-DD HH:MM
-- **Fecha fin:** (pendiente)
+- **Inicio:** YYYY-MM-DD HH:MM (zona horaria local)
+- **Fin:** (pendiente)
 - **Tiempo de ciclo:** (pendiente)
 
 ## Objetivo de la Sesión

@@ -24,7 +24,7 @@
 
 ---
 
-### ⏳ Historia de Usuario 0.1: Configuración del Entorno de Desarrollo
+### ✅ Historia de Usuario 0.1: Configuración del Entorno de Desarrollo
 
 **Como:** Desarrollador  
 **Quiero:** Tener un entorno de desarrollo configurado con todas las dependencias  
@@ -429,7 +429,7 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 
 | Feature | HU | Título | Estado |
 |---------|-----|--------|--------|
-| 0 | 0.1 | Configuración del Entorno de Desarrollo | ⏳ |
+| 0 | 0.1 | Configuración del Entorno de Desarrollo | ✅ |
 | 0 | 0.2 | Carga de Datos a Supabase (ETL) | ⏳ |
 | 1 | 1.1 | Selector de Estado | ⏳ |
 | 1 | 1.2 | Selector de Municipio con Mapeo a División | ⏳ |
