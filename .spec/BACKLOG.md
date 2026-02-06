@@ -438,6 +438,124 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 
 ---
 
+---
+
+## Feature 4: Operación y Mantenimiento ⏳
+
+> **Objetivo:** Permitir la actualización mensual de datos y facilitar la operación continua de la aplicación.
+
+### Historia de Usuario 4.1: Validación y Preview de CSV
+
+**Como:** Administrador del sistema  
+**Quiero:** Subir un archivo CSV y validar su formato antes de actualizar  
+**Para poder:** Verificar que los datos son correctos antes de cualquier cambio
+
+#### Criterios de Aceptación
+
+1. Existe una sección en el sidebar para "Actualizar Datos"
+2. El usuario puede subir un CSV con `st.file_uploader`
+3. El sistema valida que el CSV tenga las columnas requeridas
+4. Se muestra mensaje de error claro si faltan columnas o hay problemas de formato
+5. Si es válido, se muestra preview con:
+   - Cantidad de registros
+   - Rango de fechas (años/meses)
+   - Primeras 10 filas
+6. Se muestra botón "Confirmar" (preparación para HU-4.2)
+
+#### Casos de Prueba
+
+- **CP-4.1.1:** Subir CSV válido muestra preview con estadísticas y primeras filas
+- **CP-4.1.2:** Subir CSV con columnas faltantes muestra error: "Faltan columnas: X, Y"
+- **CP-4.1.3:** Subir archivo no-CSV muestra error de formato
+- **CP-4.1.4:** El botón "Confirmar" muestra mensaje informativo (sin persistencia aún)
+
+**Formato BDD:**
+
+```gherkin
+Dado que: El administrador accede a la sección de carga de datos
+Cuando: Sube un archivo CSV
+Entonces: El sistema valida el formato y columnas
+Y: Si es válido, muestra preview con estadísticas y datos de muestra
+Y: Si es inválido, muestra mensaje de error descriptivo
+```
+
+#### Notas Técnicas
+
+- Usar `st.file_uploader(type=['csv'])` 
+- Columnas requeridas: `anio`, `mes`, `tarifa`, `region`, `total`
+- Usar `st.expander` para la sección de carga (no interferir con UI principal)
+- Esta historia NO persiste datos - solo valida y muestra preview
+
+---
+
+### Historia de Usuario 4.2: Persistencia de Datos via GitHub
+
+**Como:** Administrador del sistema  
+**Quiero:** Que los datos validados se guarden permanentemente  
+**Para poder:** Actualizar la información mensualmente sin acceso al código
+
+**Dependencia:** Requiere HU-4.1 completada
+
+#### Criterios de Aceptación
+
+1. Al confirmar la carga, los datos se guardan en el repositorio GitHub
+2. Se usa la API de GitHub para crear un commit automático
+3. El commit incluye mensaje descriptivo: "Actualización de tarifas - [fecha]"
+4. Se muestra confirmación con:
+   - Cantidad de registros agregados
+   - Link al commit en GitHub
+   - Aviso de re-deploy automático (~2 min)
+5. El token de GitHub se almacena de forma segura en Streamlit Secrets
+
+#### Casos de Prueba
+
+- **CP-4.2.1:** Confirmar carga crea commit en GitHub con el CSV actualizado
+- **CP-4.2.2:** Sin token configurado, muestra mensaje de error apropiado
+- **CP-4.2.3:** Error de API muestra mensaje descriptivo y permite reintentar
+- **CP-4.2.4:** Después del re-deploy, los nuevos datos aparecen en la app
+
+**Formato BDD:**
+
+```gherkin
+Dado que: El administrador ha validado un CSV (HU-4.1)
+Cuando: Hace click en "Confirmar Actualización"
+Entonces: El sistema crea un commit en GitHub con los nuevos datos
+Y: Muestra confirmación con link al commit
+Y: Streamlit Cloud inicia re-deploy automático
+```
+
+#### Notas Técnicas
+
+- Usar `PyGithub` o `requests` para la API de GitHub
+- Token requiere scope `repo` (lectura/escritura)
+- Almacenar token en `st.secrets["GITHUB_TOKEN"]`
+- Agregar `PyGithub` a requirements.txt
+- El archivo destino es `data/02_tarifas_finales_suministro_basico.csv`
+
+#### Configuración Requerida
+
+1. Crear Personal Access Token en GitHub (Settings > Developer settings > Tokens)
+2. Agregar a Streamlit Cloud: Settings > Secrets > `GITHUB_TOKEN = "ghp_xxx..."`
+
+---
+
+### Historia de Usuario 4.3: Gestión de Catálogo de Regiones
+
+**Como:** Administrador del sistema  
+**Quiero:** Actualizar el catálogo de municipios y divisiones CFE  
+**Para poder:** Agregar nuevos municipios o corregir mapeos incorrectos
+
+#### Criterios de Aceptación
+
+1. Se puede subir un CSV con el catálogo de regiones actualizado
+2. El sistema valida formato y columnas requeridas
+3. Se muestra comparativo de cambios antes de aplicar
+4. Los cambios se persisten via GitHub (reutiliza lógica de HU-4.2)
+
+**Prioridad:** Baja (el catálogo de regiones cambia con poca frecuencia)
+
+---
+
 ## Resumen de Historias
 
 | Feature | HU | Título | Estado |
@@ -456,5 +574,8 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | 3 | 3.3 | Vista Segmentada por Horario | ✅ |
 | 3 | 3.4 | Gráfica de Tendencia Mensual | ✅ |
 | 3 | 3.5 | Vista Consolidada para Tarifas Simples | ✅ |
+| 4 | 4.1 | Validación y Preview de CSV | ⏳ |
+| 4 | 4.2 | Persistencia de Datos via GitHub | ⏳ |
+| 4 | 4.3 | Gestión de Catálogo de Regiones | ⏳ |
 
-**Total:** 14 Historias de Usuario en 4 Features
+**Total:** 17 Historias de Usuario en 5 Features

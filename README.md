@@ -33,12 +33,44 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Uso
+## Uso Local
 
 ```bash
 # Ejecutar aplicación
 streamlit run scripts/app.py
 ```
+
+## Despliegue en Streamlit Cloud
+
+La aplicación está desplegada en: **https://cfe-tariff-analyzer.streamlit.app/**
+
+### Pasos para Deploy
+
+1. **Crear cuenta en Streamlit Cloud**
+   - Ir a [share.streamlit.io](https://share.streamlit.io/)
+   - Conectar con tu cuenta de GitHub
+
+2. **Configurar la App**
+   - Click en "New app"
+   - Seleccionar el repositorio: `fcastrillo/cfe-tariff-analyzer`
+   - Branch: `main`
+   - Main file path: `scripts/app.py`
+
+3. **Deploy**
+   - Click en "Deploy"
+   - Esperar 2-3 minutos para que se construya
+
+### Actualizaciones
+
+Cada push a `main` dispara un re-deploy automático.
+
+### Limitaciones Streamlit Cloud (Free Tier)
+
+- Los archivos locales se reinician con cada deploy
+- Para persistencia de datos, considerar:
+  - Google Sheets API
+  - Supabase/PostgreSQL
+  - GitHub como almacén (commits automáticos)
 
 ## Estructura del Proyecto
 
@@ -51,9 +83,11 @@ cfe-analisis-app/
 │   ├── commands/            # Comandos de workflow (prompts para Cursor)
 │   ├── story-cards/         # Story cards generadas
 │   └── history/             # Objetivos completados
+├── assets/                   # Recursos estáticos
+│   └── cfe_logo.svg         # Logo oficial CFE
 ├── scripts/                  # Scripts de Python
 │   ├── app.py               # Aplicación Streamlit principal
-│   └── upload_data.py       # ETL para carga a Supabase
+│   └── data_loader.py       # Módulo de carga y procesamiento de datos
 ├── data/                     # Datos fuente
 │   ├── 01_catalogo_regiones.csv      # ~2,600 municipios con división CFE
 │   └── 02_tarifas_finales_suministro_basico.csv  # Histórico de tarifas
