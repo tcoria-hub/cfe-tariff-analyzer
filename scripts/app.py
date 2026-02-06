@@ -509,12 +509,33 @@ if tarifas_seleccionadas:
                 st.markdown("##### 📊 Promedio Anual")
                 
                 if resultado["es_horaria"]:
-                    # Para tarifas horarias: mostrar promedio por horario (HU-3.3)
-                    cols_prom = st.columns(3)
+                    # Para tarifas horarias: Cargo Fijo + 3 horarios
+                    # Primero: Cargo Fijo (aplica a todas las tarifas)
+                    prom_fijo = calcular_variacion_promedio_anual(
+                        tarifa=tarifa, region=division_seleccionada,
+                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                        horario=None, tipo_cargo="Fijo"
+                    )
+                    
+                    cols_fijo_horarios = st.columns([1, 1, 1, 1])
+                    
+                    with cols_fijo_horarios[0]:
+                        if prom_fijo["disponible"]:
+                            st.metric(
+                                label="📋 Cargo Fijo",
+                                value=f"${prom_fijo['promedio_actual']:.2f}/mes",
+                                delta=f"{prom_fijo['variacion_pct']:+.1f}%",
+                                delta_color="inverse",
+                                help=f"Promedio de {prom_fijo['num_meses_comunes']} meses. Anterior: ${prom_fijo['promedio_anterior']:.2f}"
+                            )
+                        else:
+                            st.metric(label="📋 Cargo Fijo", value="N/D", delta="Sin datos")
+                    
+                    # Luego: 3 KPIs por horario (HU-3.3)
                     horarios_prom = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
                     
                     for idx, (horario_key, horario_nombre) in enumerate(horarios_prom):
-                        with cols_prom[idx]:
+                        with cols_fijo_horarios[idx + 1]:
                             prom_data = calcular_variacion_promedio_anual(
                                 tarifa=tarifa, region=division_seleccionada,
                                 anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
@@ -524,10 +545,10 @@ if tarifas_seleccionadas:
                             if prom_data["disponible"]:
                                 st.metric(
                                     label=f"⏰ {horario_nombre}",
-                                    value=f"${prom_data['promedio_actual']:.4f}",
+                                    value=f"${prom_data['promedio_actual']:.4f}/kWh",
                                     delta=f"{prom_data['variacion_pct']:+.1f}%",
                                     delta_color="inverse",
-                                    help=f"Promedio de {prom_data['num_meses_comunes']} meses comunes. Anterior: ${prom_data['promedio_anterior']:.4f}"
+                                    help=f"Promedio de {prom_data['num_meses_comunes']} meses. Anterior: ${prom_data['promedio_anterior']:.4f}"
                                 )
                             else:
                                 st.metric(label=f"⏰ {horario_nombre}", value="N/D", delta="Sin datos")
@@ -672,4 +693,4 @@ else:
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.6.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.6.1 | Desarrollado con Streamlit")
