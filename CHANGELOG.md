@@ -8,6 +8,28 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-3.5: Vista Consolidada para Tarifas Simples
+**Tiempo de ciclo:** ~10 minutos
+
+#### Implementado
+- KPI de Cargo Fijo Promedio para tarifas simples ($/mes)
+- KPI de Cargo Variable Promedio ($/kWh) en 2 columnas
+- Eliminada sección "Ver detalles de los datos"
+
+#### Decisiones Clave
+- **Formato diferenciado**: Cargo Fijo en $/mes, Variable en $/kWh
+- **Limpieza de UI**: Removida tabla de debug que mostraba datos crudos
+
+#### Archivos Modificados
+- `scripts/app.py` - 2 KPIs para tarifas simples, versión v1.6.0
+
+---
+
+### 🎉 FEATURE 3 COMPLETADO
+Feature 3 "Análisis de Promedio Anual e Inteligencia Horaria" 100% implementado (5/5 historias)
+
+---
+
 ### HU-3.3: Vista Segmentada por Horario
 **Tiempo de ciclo:** ~5 minutos
 

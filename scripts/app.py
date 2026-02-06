@@ -535,23 +535,46 @@ if tarifas_seleccionadas:
                     # Leyenda de horarios típicos (HU-3.3)
                     st.caption("🕐 **Horarios típicos:** Base (0:00-6:00) | Intermedia (6:00-18:00, 22:00-0:00) | Punta (18:00-22:00)")
                 else:
-                    # Para tarifas simples: un solo promedio
-                    prom_data = calcular_variacion_promedio_anual(
-                        tarifa=tarifa, region=division_seleccionada,
-                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                        horario=None, tipo_cargo="Variable"
-                    )
+                    # Para tarifas simples: 2 KPIs (Fijo y Variable) - HU-3.5
+                    cols_simple = st.columns(2)
                     
-                    if prom_data["disponible"]:
-                        st.metric(
-                            label="📊 Promedio Variable (Energía)",
-                            value=f"${prom_data['promedio_actual']:.4f}/kWh",
-                            delta=f"{prom_data['variacion_pct']:+.1f}%",
-                            delta_color="inverse",
-                            help=f"Promedio de {prom_data['num_meses_comunes']} meses comunes. Anterior: ${prom_data['promedio_anterior']:.4f}"
+                    # KPI Cargo Fijo
+                    with cols_simple[0]:
+                        prom_fijo = calcular_variacion_promedio_anual(
+                            tarifa=tarifa, region=division_seleccionada,
+                            anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                            horario=None, tipo_cargo="Fijo"
                         )
-                    else:
-                        st.metric(label="📊 Promedio Variable", value="N/D", delta="Sin datos")
+                        
+                        if prom_fijo["disponible"]:
+                            st.metric(
+                                label="📋 Promedio Cargo Fijo",
+                                value=f"${prom_fijo['promedio_actual']:.2f}/mes",
+                                delta=f"{prom_fijo['variacion_pct']:+.1f}%",
+                                delta_color="inverse",
+                                help=f"Promedio de {prom_fijo['num_meses_comunes']} meses. Anterior: ${prom_fijo['promedio_anterior']:.2f}"
+                            )
+                        else:
+                            st.metric(label="📋 Promedio Cargo Fijo", value="N/D", delta="Sin datos")
+                    
+                    # KPI Cargo Variable
+                    with cols_simple[1]:
+                        prom_data = calcular_variacion_promedio_anual(
+                            tarifa=tarifa, region=division_seleccionada,
+                            anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                            horario=None, tipo_cargo="Variable"
+                        )
+                        
+                        if prom_data["disponible"]:
+                            st.metric(
+                                label="⚡ Promedio Variable (Energía)",
+                                value=f"${prom_data['promedio_actual']:.4f}/kWh",
+                                delta=f"{prom_data['variacion_pct']:+.1f}%",
+                                delta_color="inverse",
+                                help=f"Promedio de {prom_data['num_meses_comunes']} meses. Anterior: ${prom_data['promedio_anterior']:.4f}"
+                            )
+                        else:
+                            st.metric(label="⚡ Promedio Variable", value="N/D", delta="Sin datos")
                 
                 # === GRÁFICA DE TENDENCIA MENSUAL (HU-3.4) ===
                 st.markdown("##### 📈 Tendencia Mensual")
@@ -638,13 +661,7 @@ else:
         key="selector_anio_disabled"
     )
 
-# Expandible con detalles de datos
-with st.expander("Ver detalles de los datos"):
-    st.markdown("#### Geografía (primeros 10 registros)")
-    st.dataframe(df_geografia.head(10), use_container_width=True)
-    
-    st.markdown("#### Tarifas (primeros 10 registros)")
-    st.dataframe(df_tarifas.head(10), use_container_width=True)
+# Nota: Sección "Ver detalles de los datos" eliminada (HU-3.5)
     
     st.markdown("#### Estadísticas completas")
     col1, col2 = st.columns(2)
@@ -655,4 +672,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.5.1 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.6.0 | Desarrollado con Streamlit")
