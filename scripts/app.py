@@ -26,14 +26,19 @@ from data_loader import (
 
 # Configuración de la página
 st.set_page_config(
-    page_title="CFE Tariff Analyzer",
+    page_title="CFE - Analizador de Tarifas",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Título principal
-st.title("⚡ CFE Tariff Analyzer")
+# Logo y título principal
+col_logo, col_title = st.columns([1, 4])
+with col_logo:
+    st.image("assets/cfe_logo.svg", width=150)
+with col_title:
+    st.title("Analizador de Tarifas")
+    st.caption("Análisis interactivo de tarifas eléctricas CFE")
 st.markdown("---")
 
 # Cargar datos al iniciar
@@ -693,4 +698,4 @@ else:
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.6.1 | Desarrollado con Streamlit")
+st.caption("CFE Analizador de Tarifas v1.6.3 | Desarrollado con Streamlit")
