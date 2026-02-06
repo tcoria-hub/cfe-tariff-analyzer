@@ -309,7 +309,7 @@ Entonces: Ve una gráfica de barras mostrando el impacto de cada componente en l
 
 ---
 
-### ⏳ Historia de Usuario 3.1: KPI de Promedio Anual
+### ✅ Historia de Usuario 3.1: KPI de Promedio Anual
 
 **Como:** Analista de costos  
 **Quiero:** Ver el promedio mensual del año seleccionado vs el año anterior  
@@ -451,7 +451,7 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | 2 | 2.1 | KPI de Variación Total Diciembre | ✅ |
 | 2 | 2.2 | Desglose de Variación por Componente | ✅ |
 | 2 | 2.3 | Gráfica Comparativa de Cierres | ✅ |
-| 3 | 3.1 | KPI de Promedio Anual | ⏳ |
+| 3 | 3.1 | KPI de Promedio Anual | ✅ |
 | 3 | 3.2 | Detección Automática de Estructura Horaria | ✅ |
 | 3 | 3.3 | Vista Segmentada por Horario | ⏳ |
 | 3 | 3.4 | Gráfica de Tendencia Mensual | ✅ |

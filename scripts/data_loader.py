@@ -693,3 +693,108 @@ def get_datos_tendencia_comparativa(
             })
     
     return datos
+
+
+def calcular_promedio_anual(
+    tarifa: str,
+    region: str,
+    anio: int,
+    horario: Optional[str] = None,
+    tipo_cargo: str = "Variable"
+) -> dict:
+    """
+    Calcula el promedio anual de un cargo.
+    
+    Args:
+        tarifa: Código de tarifa
+        region: Nombre de la región/división
+        anio: Año a consultar
+        horario: "B", "I", "P" para tarifas horarias, None para simples
+        tipo_cargo: "Variable" o "Capacidad"
+        
+    Returns:
+        Diccionario con promedio, meses disponibles y lista de meses
+    """
+    tendencia = get_tendencia_mensual(tarifa, region, anio, horario, tipo_cargo)
+    
+    # Filtrar solo meses con valores
+    valores = [item["valor"] for item in tendencia if item["valor"] is not None]
+    meses_disponibles = [item["mes"] for item in tendencia if item["valor"] is not None]
+    
+    if not valores:
+        return {
+            "promedio": None,
+            "num_meses": 0,
+            "meses": []
+        }
+    
+    return {
+        "promedio": sum(valores) / len(valores),
+        "num_meses": len(valores),
+        "meses": meses_disponibles
+    }
+
+
+def calcular_variacion_promedio_anual(
+    tarifa: str,
+    region: str,
+    anio_actual: int,
+    anio_anterior: int,
+    horario: Optional[str] = None,
+    tipo_cargo: str = "Variable"
+) -> dict:
+    """
+    Calcula la variación del promedio anual entre dos años.
+    Compara solo los meses que existen en ambos años para una comparación justa.
+    
+    Args:
+        tarifa: Código de tarifa
+        region: Nombre de la región/división
+        anio_actual: Año de análisis
+        anio_anterior: Año de comparación
+        horario: "B", "I", "P" para tarifas horarias, None para simples
+        tipo_cargo: "Variable" o "Capacidad"
+        
+    Returns:
+        Diccionario con promedios, variación y meses comparados
+    """
+    # Obtener tendencias de ambos años
+    tendencia_actual = get_tendencia_mensual(tarifa, region, anio_actual, horario, tipo_cargo)
+    tendencia_anterior = get_tendencia_mensual(tarifa, region, anio_anterior, horario, tipo_cargo)
+    
+    # Crear diccionarios de mes -> valor
+    valores_actual = {item["mes"]: item["valor"] for item in tendencia_actual if item["valor"] is not None}
+    valores_anterior = {item["mes"]: item["valor"] for item in tendencia_anterior if item["valor"] is not None}
+    
+    # Encontrar meses comunes (para comparación justa)
+    meses_comunes = set(valores_actual.keys()) & set(valores_anterior.keys())
+    
+    if not meses_comunes:
+        return {
+            "promedio_actual": None,
+            "promedio_anterior": None,
+            "variacion_pct": None,
+            "num_meses_actual": len(valores_actual),
+            "num_meses_anterior": len(valores_anterior),
+            "num_meses_comunes": 0,
+            "disponible": False
+        }
+    
+    # Calcular promedios solo de meses comunes
+    promedio_actual = sum(valores_actual[m] for m in meses_comunes) / len(meses_comunes)
+    promedio_anterior = sum(valores_anterior[m] for m in meses_comunes) / len(meses_comunes)
+    
+    # Calcular variación
+    variacion_pct = None
+    if promedio_anterior != 0:
+        variacion_pct = ((promedio_actual / promedio_anterior) - 1) * 100
+    
+    return {
+        "promedio_actual": promedio_actual,
+        "promedio_anterior": promedio_anterior,
+        "variacion_pct": variacion_pct,
+        "num_meses_actual": len(valores_actual),
+        "num_meses_anterior": len(valores_anterior),
+        "num_meses_comunes": len(meses_comunes),
+        "disponible": True
+    }

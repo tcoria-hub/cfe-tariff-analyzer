@@ -8,6 +8,27 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-3.1: KPI de Promedio Anual
+**Tiempo de ciclo:** ~20 minutos
+
+#### Implementado
+- Función `calcular_promedio_anual()` para calcular media aritmética de meses disponibles
+- Función `calcular_variacion_promedio_anual()` para comparar promedios entre dos años
+- Sección "📊 Promedio Anual" en la UI con `st.metric`
+- Para tarifas horarias: 3 KPIs en columnas (Base, Intermedia, Punta)
+- Para tarifas simples: 1 KPI para Variable (Energía)
+
+#### Decisiones Clave
+- **Comparación justa**: Solo se comparan meses que existen en ambos años
+- **Tooltip informativo**: Muestra cantidad de meses comparados y valor anterior
+- **delta_color="inverse"**: Incrementos en rojo (malo), decrementos en verde (bueno)
+
+#### Archivos Modificados
+- `scripts/data_loader.py` - Nuevas funciones para cálculo de promedios
+- `scripts/app.py` - Sección KPI de promedio anual, versión v1.5.0
+
+---
+
 ### HU-3.4: Gráfica de Tendencia Mensual
 **Tiempo de ciclo:** ~30 minutos
 

@@ -21,6 +21,7 @@ from data_loader import (
     calcular_variacion_diciembre,
     calcular_variacion_componentes,
     get_datos_tendencia_comparativa,
+    calcular_variacion_promedio_anual,
 )
 
 # Configuración de la página
@@ -504,6 +505,51 @@ if tarifas_seleccionadas:
                             )
                             st.plotly_chart(fig_comp, use_container_width=True)
                 
+                # === KPI DE PROMEDIO ANUAL (HU-3.1) ===
+                st.markdown("##### 📊 Promedio Anual")
+                
+                if resultado["es_horaria"]:
+                    # Para tarifas horarias: mostrar promedio por horario
+                    cols_prom = st.columns(3)
+                    horarios_prom = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
+                    
+                    for idx, (horario_key, horario_nombre) in enumerate(horarios_prom):
+                        with cols_prom[idx]:
+                            prom_data = calcular_variacion_promedio_anual(
+                                tarifa=tarifa, region=division_seleccionada,
+                                anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                                horario=horario_key, tipo_cargo="Variable"
+                            )
+                            
+                            if prom_data["disponible"]:
+                                st.metric(
+                                    label=f"⏰ {horario_nombre}",
+                                    value=f"${prom_data['promedio_actual']:.4f}",
+                                    delta=f"{prom_data['variacion_pct']:+.1f}%",
+                                    delta_color="inverse",
+                                    help=f"Promedio de {prom_data['num_meses_comunes']} meses comunes. Anterior: ${prom_data['promedio_anterior']:.4f}"
+                                )
+                            else:
+                                st.metric(label=f"⏰ {horario_nombre}", value="N/D", delta="Sin datos")
+                else:
+                    # Para tarifas simples: un solo promedio
+                    prom_data = calcular_variacion_promedio_anual(
+                        tarifa=tarifa, region=division_seleccionada,
+                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                        horario=None, tipo_cargo="Variable"
+                    )
+                    
+                    if prom_data["disponible"]:
+                        st.metric(
+                            label="📊 Promedio Variable (Energía)",
+                            value=f"${prom_data['promedio_actual']:.4f}/kWh",
+                            delta=f"{prom_data['variacion_pct']:+.1f}%",
+                            delta_color="inverse",
+                            help=f"Promedio de {prom_data['num_meses_comunes']} meses comunes. Anterior: ${prom_data['promedio_anterior']:.4f}"
+                        )
+                    else:
+                        st.metric(label="📊 Promedio Variable", value="N/D", delta="Sin datos")
+                
                 # === GRÁFICA DE TENDENCIA MENSUAL (HU-3.4) ===
                 st.markdown("##### 📈 Tendencia Mensual")
                 
@@ -606,4 +652,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.4.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.5.0 | Desarrollado con Streamlit")
