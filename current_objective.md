@@ -17,9 +17,10 @@
 | HU-2.1   | ~1 hora         | 2026-02-05 |
 | HU-2.2   | ~45 minutos     | 2026-02-05 |
 | HU-2.3   | ~1 hora         | 2026-02-05 |
-| HU-3.2   | N/A             | 2026-02-05 |
-| HU-3.4   | ~30 minutos     | 2026-02-05 |
 | HU-3.1   | ~20 minutos     | 2026-02-05 |
+| HU-3.2   | N/A             | 2026-02-05 |
+| HU-3.3   | ~5 minutos      | 2026-02-05 |
+| HU-3.4   | ~30 minutos     | 2026-02-05 |
 
 ## Referencias
 - [BACKLOG.md](.spec/BACKLOG.md)

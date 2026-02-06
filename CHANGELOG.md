@@ -8,6 +8,22 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-3.3: Vista Segmentada por Horario
+**Tiempo de ciclo:** ~5 minutos
+
+#### Implementado
+- Leyenda de horarios típicos con `st.caption`
+- Nota: La funcionalidad principal (3 KPIs) ya existía desde HU-3.1
+
+#### Decisiones Clave
+- **Reutilización**: Se aprovechó código de HU-3.1 (3 columnas con st.metric)
+- **Formato de leyenda**: "Base (0:00-6:00) | Intermedia (6:00-18:00, 22:00-0:00) | Punta (18:00-22:00)"
+
+#### Archivos Modificados
+- `scripts/app.py` - Leyenda de horarios, versión v1.5.1
+
+---
+
 ### HU-3.1: KPI de Promedio Anual
 **Tiempo de ciclo:** ~20 minutos
 

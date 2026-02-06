@@ -509,7 +509,7 @@ if tarifas_seleccionadas:
                 st.markdown("##### 📊 Promedio Anual")
                 
                 if resultado["es_horaria"]:
-                    # Para tarifas horarias: mostrar promedio por horario
+                    # Para tarifas horarias: mostrar promedio por horario (HU-3.3)
                     cols_prom = st.columns(3)
                     horarios_prom = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
                     
@@ -531,6 +531,9 @@ if tarifas_seleccionadas:
                                 )
                             else:
                                 st.metric(label=f"⏰ {horario_nombre}", value="N/D", delta="Sin datos")
+                    
+                    # Leyenda de horarios típicos (HU-3.3)
+                    st.caption("🕐 **Horarios típicos:** Base (0:00-6:00) | Intermedia (6:00-18:00, 22:00-0:00) | Punta (18:00-22:00)")
                 else:
                     # Para tarifas simples: un solo promedio
                     prom_data = calcular_variacion_promedio_anual(
@@ -652,4 +655,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.5.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.5.1 | Desarrollado con Streamlit")

@@ -367,7 +367,7 @@ Entonces: Identifica int_horario = [B, I, P] y activa modo "tarifa horaria"
 
 ---
 
-### ⏳ Historia de Usuario 3.3: Vista Segmentada por Horario (Tarifas Horarias)
+### ✅ Historia de Usuario 3.3: Vista Segmentada por Horario (Tarifas Horarias)
 
 **Como:** Analista de tarifas horarias  
 **Quiero:** Ver métricas separadas para Base, Intermedia y Punta  
@@ -453,7 +453,7 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | 2 | 2.3 | Gráfica Comparativa de Cierres | ✅ |
 | 3 | 3.1 | KPI de Promedio Anual | ✅ |
 | 3 | 3.2 | Detección Automática de Estructura Horaria | ✅ |
-| 3 | 3.3 | Vista Segmentada por Horario | ⏳ |
+| 3 | 3.3 | Vista Segmentada por Horario | ✅ |
 | 3 | 3.4 | Gráfica de Tendencia Mensual | ✅ |
 | 3 | 3.5 | Vista Consolidada para Tarifas Simples | ⏳ |
 
