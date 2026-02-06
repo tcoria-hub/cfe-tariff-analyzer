@@ -7,7 +7,7 @@
 
 - ⏳ Feature 0: Configuración Inicial y ETL
 - ✅ Feature 1: Selector Geográfico y de Tarifas
-- ⏳ Feature 2: Comparativo Diciembre vs Diciembre
+- ✅ Feature 2: Comparativo Diciembre vs Diciembre
 - ⏳ Feature 3: Análisis de Promedio Anual e Inteligencia Horaria
 
 ---
@@ -247,7 +247,7 @@ Entonces: Muestra una tarjeta con "Total Diciembre: $X.XX" y delta "+Y.Y%"
 
 ---
 
-### ⏳ Historia de Usuario 2.2: Desglose de Variación por Componente
+### ✅ Historia de Usuario 2.2: Desglose de Variación por Componente
 
 **Como:** Analista de costos  
 **Quiero:** Ver cómo cada componente de la tarifa contribuyó a la variación total  
@@ -449,7 +449,7 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | 1 | 1.3 | Selector Dinámico de Tarifas | ✅ |
 | 1 | 1.4 | Selector de Año de Análisis | ✅ |
 | 2 | 2.1 | KPI de Variación Total Diciembre | ✅ |
-| 2 | 2.2 | Desglose de Variación por Componente | ⏳ |
+| 2 | 2.2 | Desglose de Variación por Componente | ✅ |
 | 2 | 2.3 | Gráfica Comparativa de Cierres | ✅ |
 | 3 | 3.1 | KPI de Promedio Anual | ⏳ |
 | 3 | 3.2 | Detección Automática de Estructura Horaria | ⏳ |

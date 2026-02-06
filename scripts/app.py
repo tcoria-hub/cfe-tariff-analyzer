@@ -19,6 +19,7 @@ from data_loader import (
     get_data_stats,
     verificar_match_regiones,
     calcular_variacion_diciembre,
+    calcular_variacion_componentes,
 )
 
 # Configuración de la página
@@ -256,223 +257,253 @@ if tarifas_seleccionadas:
     if anio_seleccionado == max(anios):
         st.warning(f"⚠️ {anio_seleccionado} es el año más reciente. Si no hay datos de diciembre, selecciona un año anterior.")
     
-    # Mostrar KPIs para cada tarifa seleccionada
-    for tarifa in tarifas_seleccionadas:
-        # Calcular variación
-        resultado = calcular_variacion_diciembre(
-            tarifa=tarifa,
-            region=division_seleccionada,
-            anio_actual=anio_seleccionado,
-            anio_anterior=anio_comparativo
-        )
-        
-        st.markdown(f"#### {tarifa}")
-        
-        if resultado["disponible"]:
-            if resultado["es_horaria"]:
-                # Tarifa horaria: mostrar Base, Intermedia, Punta + Capacidad
-                horarios_info = [
-                    ("B", "Base"),
-                    ("I", "Intermedia"),
-                    ("P", "Punta"),
-                    ("capacidad", "Capacidad"),
-                ]
+    # Pestañas por tarifa (HU-2.2 mejora de UX)
+    tabs = st.tabs(tarifas_seleccionadas)
+    
+    for tab, tarifa in zip(tabs, tarifas_seleccionadas):
+        with tab:
+            # Calcular variación
+            resultado = calcular_variacion_diciembre(
+                tarifa=tarifa,
+                region=division_seleccionada,
+                anio_actual=anio_seleccionado,
+                anio_anterior=anio_comparativo
+            )
+            
+            if resultado["disponible"]:
+                # === TABLA RESUMEN ===
+                st.markdown("##### 📋 Resumen de Tarifas")
                 
-                # Crear tabla con datos
-                col_headers = st.columns(5)
-                col_headers[0].markdown("**Concepto**")
-                col_headers[1].markdown(f"**Dic {anio_comparativo}**")
-                col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
-                col_headers[3].markdown("**Variación**")
-                col_headers[4].markdown("**Unidad**")
-                
-                for key, nombre in horarios_info:
-                    datos = resultado["horarios"].get(key, {})
-                    cols = st.columns(5)
+                if resultado["es_horaria"]:
+                    horarios_info = [
+                        ("B", "Base"),
+                        ("I", "Intermedia"),
+                        ("P", "Punta"),
+                        ("capacidad", "Capacidad"),
+                    ]
                     
-                    if datos.get("actual") is not None:
-                        anterior = datos.get("anterior")
-                        actual = datos.get("actual")
-                        variacion = datos.get("variacion_pct")
+                    col_headers = st.columns(5)
+                    col_headers[0].markdown("**Concepto**")
+                    col_headers[1].markdown(f"**Dic {anio_comparativo}**")
+                    col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
+                    col_headers[3].markdown("**Variación**")
+                    col_headers[4].markdown("**Unidad**")
+                    
+                    for key, nombre in horarios_info:
+                        datos = resultado["horarios"].get(key, {})
+                        cols = st.columns(5)
                         
-                        unidad = "$/kW" if key == "capacidad" else "$/kWh"
-                        
-                        cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
-                        cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
-                        cols[2].write(f"${actual:.4f}")
-                        if variacion is not None:
-                            color = "🔴" if variacion > 0 else "🟢"
-                            cols[3].write(f"{color} {variacion:+.2f}%")
+                        if datos.get("actual") is not None:
+                            anterior = datos.get("anterior")
+                            actual = datos.get("actual")
+                            variacion = datos.get("variacion_pct")
+                            unidad = "$/kW" if key == "capacidad" else "$/kWh"
+                            
+                            cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
+                            cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
+                            cols[2].write(f"${actual:.4f}")
+                            if variacion is not None:
+                                color = "🔴" if variacion > 0 else "🟢"
+                                cols[3].write(f"{color} {variacion:+.2f}%")
+                            else:
+                                cols[3].write("N/D")
+                            cols[4].write(unidad)
                         else:
+                            cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
+                            cols[1].write("N/D")
+                            cols[2].write("N/D")
                             cols[3].write("N/D")
-                        cols[4].write(unidad)
-                    else:
-                        cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
-                        cols[1].write("N/D")
-                        cols[2].write("N/D")
-                        cols[3].write("N/D")
-                        cols[4].write("-")
-            else:
-                # Tarifa simple: mostrar cargo Variable + Capacidad
-                col_headers = st.columns(5)
-                col_headers[0].markdown("**Concepto**")
-                col_headers[1].markdown(f"**Dic {anio_comparativo}**")
-                col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
-                col_headers[3].markdown("**Variación**")
-                col_headers[4].markdown("**Unidad**")
-                
-                for key, nombre, unidad in [("simple", "Variable (Energía)", "$/kWh"), ("capacidad", "Capacidad", "$/kW")]:
-                    datos = resultado["horarios"].get(key, {})
-                    cols = st.columns(5)
+                            cols[4].write("-")
+                else:
+                    col_headers = st.columns(5)
+                    col_headers[0].markdown("**Concepto**")
+                    col_headers[1].markdown(f"**Dic {anio_comparativo}**")
+                    col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
+                    col_headers[3].markdown("**Variación**")
+                    col_headers[4].markdown("**Unidad**")
                     
-                    if datos.get("actual") is not None:
-                        anterior = datos.get("anterior")
-                        actual = datos.get("actual")
-                        variacion = datos.get("variacion_pct")
+                    for key, nombre, unidad in [("simple", "Variable (Energía)", "$/kWh"), ("capacidad", "Capacidad", "$/kW")]:
+                        datos = resultado["horarios"].get(key, {})
+                        cols = st.columns(5)
                         
-                        cols[0].write(f"📊 {nombre}")
-                        cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
-                        cols[2].write(f"${actual:.4f}")
-                        if variacion is not None:
-                            color = "🔴" if variacion > 0 else "🟢"
-                            cols[3].write(f"{color} {variacion:+.2f}%")
+                        if datos.get("actual") is not None:
+                            anterior = datos.get("anterior")
+                            actual = datos.get("actual")
+                            variacion = datos.get("variacion_pct")
+                            
+                            cols[0].write(f"📊 {nombre}")
+                            cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
+                            cols[2].write(f"${actual:.4f}")
+                            if variacion is not None:
+                                color = "🔴" if variacion > 0 else "🟢"
+                                cols[3].write(f"{color} {variacion:+.2f}%")
+                            else:
+                                cols[3].write("N/D")
+                            cols[4].write(unidad)
                         else:
+                            cols[0].write(f"📊 {nombre}")
+                            cols[1].write("N/D")
+                            cols[2].write("N/D")
                             cols[3].write("N/D")
-                        cols[4].write(unidad)
-                    else:
-                        cols[0].write(f"📊 {nombre}")
-                        cols[1].write("N/D")
-                        cols[2].write("N/D")
-                        cols[3].write("N/D")
-                        cols[4].write("-")
-            # Gráfica comparativa (HU-2.3)
-            st.markdown("##### 📊 Gráfica Comparativa")
-            
-            # Preparar datos separados por unidad
-            datos_kwh = []  # Variable (Energía) en $/kWh
-            datos_kw = []   # Capacidad en $/kW
-            
-            for key, datos_cargo in resultado["horarios"].items():
-                if datos_cargo.get("actual") is not None or datos_cargo.get("anterior") is not None:
-                    # Nombre del concepto y clasificación por unidad
-                    if key == "B":
-                        concepto = "Base"
-                        es_capacidad = False
-                    elif key == "I":
-                        concepto = "Intermedia"
-                        es_capacidad = False
-                    elif key == "P":
-                        concepto = "Punta"
-                        es_capacidad = False
-                    elif key == "capacidad":
-                        concepto = "Capacidad"
-                        es_capacidad = True
-                    elif key == "simple":
-                        concepto = "Variable"
-                        es_capacidad = False
-                    else:
-                        concepto = key
-                        es_capacidad = False
+                            cols[4].write("-")
+                
+                # === GRÁFICA COMPARATIVA ===
+                st.markdown("##### 📊 Gráfica Comparativa")
+                
+                datos_kwh = []
+                datos_kw = []
+                
+                for key, datos_cargo in resultado["horarios"].items():
+                    if datos_cargo.get("actual") is not None or datos_cargo.get("anterior") is not None:
+                        if key == "B":
+                            concepto, es_capacidad = "Base", False
+                        elif key == "I":
+                            concepto, es_capacidad = "Intermedia", False
+                        elif key == "P":
+                            concepto, es_capacidad = "Punta", False
+                        elif key == "capacidad":
+                            concepto, es_capacidad = "Capacidad", True
+                        elif key == "simple":
+                            concepto, es_capacidad = "Variable", False
+                        else:
+                            concepto, es_capacidad = key, False
+                        
+                        lista_destino = datos_kw if es_capacidad else datos_kwh
+                        
+                        if datos_cargo.get("anterior") is not None:
+                            lista_destino.append({
+                                "Concepto": concepto,
+                                "Año": str(anio_comparativo),
+                                "Valor": datos_cargo["anterior"]
+                            })
+                        if datos_cargo.get("actual") is not None:
+                            lista_destino.append({
+                                "Concepto": concepto,
+                                "Año": str(anio_seleccionado),
+                                "Valor": datos_cargo["actual"]
+                            })
+                
+                colores = {
+                    str(anio_comparativo): "#636EFA",
+                    str(anio_seleccionado): "#EF553B"
+                }
+                
+                tiene_kwh = len(datos_kwh) > 0
+                tiene_kw = len(datos_kw) > 0
+                
+                if tiene_kwh and tiene_kw:
+                    col_kwh, col_kw = st.columns([3, 1])
+                elif tiene_kwh:
+                    col_kwh, col_kw = st.container(), None
+                elif tiene_kw:
+                    col_kwh, col_kw = None, st.container()
+                else:
+                    col_kwh, col_kw = None, None
+                
+                if tiene_kwh and col_kwh:
+                    with col_kwh:
+                        df_kwh = pd.DataFrame(datos_kwh)
+                        fig_kwh = px.bar(df_kwh, x="Concepto", y="Valor", color="Año",
+                                        barmode="group", title="Variable ($/kWh)",
+                                        color_discrete_map=colores, text_auto=".2f")
+                        fig_kwh.update_layout(yaxis_title="$/kWh", xaxis_title="",
+                                            legend_title="Año", height=300, margin=dict(t=40, b=40))
+                        fig_kwh.update_traces(hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>")
+                        st.plotly_chart(fig_kwh, use_container_width=True)
+                
+                if tiene_kw and col_kw:
+                    with col_kw:
+                        df_kw = pd.DataFrame(datos_kw)
+                        fig_kw = px.bar(df_kw, x="Concepto", y="Valor", color="Año",
+                                       barmode="group", title="Capacidad ($/kW)",
+                                       color_discrete_map=colores, text_auto=".2f")
+                        fig_kw.update_layout(yaxis_title="$/kW", xaxis_title="",
+                                           legend_title="Año", height=300, margin=dict(t=40, b=40),
+                                           showlegend=False)
+                        fig_kw.update_traces(hovertemplate="<b>%{x}</b><br>$%{y:.2f}/kW<extra></extra>")
+                        st.plotly_chart(fig_kw, use_container_width=True)
+                
+                # === DESGLOSE POR COMPONENTES ===
+                st.markdown("##### 🔍 Desglose por Componente")
+                
+                if resultado["es_horaria"]:
+                    horarios_analizar = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
+                    # Usar columnas para mostrar los 3 horarios lado a lado
+                    cols_desglose = st.columns(3)
                     
-                    lista_destino = datos_kw if es_capacidad else datos_kwh
+                    for idx, (horario_key, horario_nombre) in enumerate(horarios_analizar):
+                        with cols_desglose[idx]:
+                            componentes = calcular_variacion_componentes(
+                                tarifa=tarifa, region=division_seleccionada,
+                                anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                                horario=horario_key, tipo_cargo="Variable"
+                            )
+                            
+                            if componentes:
+                                datos_comp = [
+                                    {"Componente": c["nombre"], "Variación": c["var_absoluta"],
+                                     "Anterior": c["anterior"] or 0, "Actual": c["actual"] or 0,
+                                     "Var %": c["var_pct"] or 0}
+                                    for c in componentes if c["var_absoluta"] is not None
+                                ]
+                                
+                                if datos_comp:
+                                    df_comp = pd.DataFrame(datos_comp)
+                                    df_comp["Color"] = df_comp["Variación"].apply(
+                                        lambda x: "Subió" if x > 0 else "Bajó"
+                                    )
+                                    
+                                    fig_comp = px.bar(
+                                        df_comp, y="Componente", x="Variación", color="Color",
+                                        orientation="h", title=f"{horario_nombre}",
+                                        color_discrete_map={"Subió": "#EF553B", "Bajó": "#00CC96"},
+                                        text=df_comp["Var %"].apply(lambda x: f"{x:+.1f}%")
+                                    )
+                                    fig_comp.update_layout(
+                                        xaxis_title="$/kWh", yaxis_title="",
+                                        height=250, showlegend=False,
+                                        margin=dict(l=10, r=10, t=30, b=30)
+                                    )
+                                    fig_comp.update_traces(
+                                        hovertemplate="<b>%{y}</b><br>Var: $%{x:.4f}<extra></extra>"
+                                    )
+                                    st.plotly_chart(fig_comp, use_container_width=True)
+                else:
+                    # Tarifa simple: una sola gráfica de desglose
+                    componentes = calcular_variacion_componentes(
+                        tarifa=tarifa, region=division_seleccionada,
+                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                        horario=None, tipo_cargo="Variable"
+                    )
                     
-                    # Agregar datos del año anterior
-                    if datos_cargo.get("anterior") is not None:
-                        lista_destino.append({
-                            "Concepto": concepto,
-                            "Año": str(anio_comparativo),
-                            "Valor": datos_cargo["anterior"]
-                        })
-                    
-                    # Agregar datos del año actual
-                    if datos_cargo.get("actual") is not None:
-                        lista_destino.append({
-                            "Concepto": concepto,
-                            "Año": str(anio_seleccionado),
-                            "Valor": datos_cargo["actual"]
-                        })
-            
-            # Colores consistentes
-            colores = {
-                str(anio_comparativo): "#636EFA",  # Azul para año anterior
-                str(anio_seleccionado): "#EF553B"   # Rojo para año actual
-            }
-            
-            # Crear columnas para las gráficas
-            tiene_kwh = len(datos_kwh) > 0
-            tiene_kw = len(datos_kw) > 0
-            
-            if tiene_kwh and tiene_kw:
-                col_kwh, col_kw = st.columns([3, 1])
-            elif tiene_kwh:
-                col_kwh = st.container()
-                col_kw = None
-            elif tiene_kw:
-                col_kwh = None
-                col_kw = st.container()
+                    if componentes:
+                        datos_comp = [
+                            {"Componente": c["nombre"], "Variación": c["var_absoluta"],
+                             "Anterior": c["anterior"] or 0, "Actual": c["actual"] or 0,
+                             "Var %": c["var_pct"] or 0}
+                            for c in componentes if c["var_absoluta"] is not None
+                        ]
+                        
+                        if datos_comp:
+                            df_comp = pd.DataFrame(datos_comp)
+                            df_comp["Color"] = df_comp["Variación"].apply(
+                                lambda x: "Subió 🔴" if x > 0 else "Bajó 🟢"
+                            )
+                            
+                            fig_comp = px.bar(
+                                df_comp, y="Componente", x="Variación", color="Color",
+                                orientation="h", title="Variación por Componente",
+                                color_discrete_map={"Subió 🔴": "#EF553B", "Bajó 🟢": "#00CC96"},
+                                text=df_comp["Var %"].apply(lambda x: f"{x:+.1f}%")
+                            )
+                            fig_comp.update_layout(
+                                xaxis_title="Variación ($/kWh)", yaxis_title="",
+                                height=300, showlegend=True, legend_title="",
+                                margin=dict(l=10, r=10, t=40, b=40)
+                            )
+                            st.plotly_chart(fig_comp, use_container_width=True)
             else:
-                col_kwh = None
-                col_kw = None
-            
-            # Gráfica de Variable ($/kWh)
-            if tiene_kwh and col_kwh:
-                with col_kwh:
-                    df_kwh = pd.DataFrame(datos_kwh)
-                    fig_kwh = px.bar(
-                        df_kwh,
-                        x="Concepto",
-                        y="Valor",
-                        color="Año",
-                        barmode="group",
-                        title="Variable ($/kWh)",
-                        color_discrete_map=colores,
-                        text_auto=".2f"
-                    )
-                    fig_kwh.update_layout(
-                        yaxis_title="$/kWh",
-                        xaxis_title="",
-                        legend_title="Año",
-                        height=350,
-                        margin=dict(t=40, b=40)
-                    )
-                    fig_kwh.update_traces(
-                        hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>"
-                    )
-                    st.plotly_chart(fig_kwh, use_container_width=True)
-            
-            # Gráfica de Capacidad ($/kW)
-            if tiene_kw and col_kw:
-                with col_kw:
-                    df_kw = pd.DataFrame(datos_kw)
-                    fig_kw = px.bar(
-                        df_kw,
-                        x="Concepto",
-                        y="Valor",
-                        color="Año",
-                        barmode="group",
-                        title="Capacidad ($/kW)",
-                        color_discrete_map=colores,
-                        text_auto=".2f"
-                    )
-                    fig_kw.update_layout(
-                        yaxis_title="$/kW",
-                        xaxis_title="",
-                        legend_title="Año",
-                        height=350,
-                        margin=dict(t=40, b=40),
-                        showlegend=False  # Ya está en la otra gráfica
-                    )
-                    fig_kw.update_traces(
-                        hovertemplate="<b>%{x}</b><br>$%{y:.2f}/kW<extra></extra>"
-                    )
-                    st.plotly_chart(fig_kw, use_container_width=True)
-            
-            if not tiene_kwh and not tiene_kw:
-                st.info("No hay datos suficientes para generar la gráfica")
-        else:
-            st.warning(f"No hay datos de diciembre para {tarifa} en {anio_seleccionado} o {anio_comparativo}")
-        
-        st.markdown("---")
+                st.warning(f"No hay datos de diciembre para {tarifa} en {anio_seleccionado} o {anio_comparativo}")
 else:
     # Selector deshabilitado si no hay tarifas
     st.selectbox(
@@ -499,4 +530,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.2.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.3.0 | Desarrollado con Streamlit")

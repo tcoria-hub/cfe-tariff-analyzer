@@ -430,3 +430,139 @@ def calcular_variacion_diciembre(tarifa: str, region: str, anio_actual: int, ani
         }
     
     return resultado
+
+
+# Columnas de componentes disponibles en el CSV
+COMPONENTES = ["transmision", "distribucion", "cenace", "suministro", "scnmem", "generacion", "capacidad"]
+
+# Nombres legibles para cada componente
+COMPONENTES_NOMBRES = {
+    "transmision": "Transmisión",
+    "distribucion": "Distribución",
+    "cenace": "CENACE",
+    "suministro": "Suministro",
+    "scnmem": "SCnMEM",
+    "generacion": "Generación",
+    "capacidad": "Capacidad"
+}
+
+
+def get_componentes_diciembre(
+    tarifa: str, 
+    region: str, 
+    anio: int, 
+    horario: Optional[str] = None,
+    tipo_cargo: str = "Variable"
+) -> dict:
+    """
+    Obtiene el desglose de componentes de un cargo de diciembre.
+    
+    Args:
+        tarifa: Código de tarifa
+        region: Nombre de la región/división
+        anio: Año a consultar
+        horario: "B", "I", "P" para tarifas horarias, None para simples
+        tipo_cargo: "Variable" o "Capacidad"
+        
+    Returns:
+        Diccionario con valores de cada componente
+    """
+    df = load_tarifas()
+    
+    # Normalizar región
+    region_norm = normalizar_texto(region)
+    
+    # Filtrar por tarifa, región, año, mes diciembre y tipo de cargo
+    filtro = (
+        (df["tarifa"] == tarifa) &
+        (df["region"] == region_norm) &
+        (df["anio"] == anio) &
+        (df["mes"] == "diciembre") &
+        (df["cargo"].str.contains(tipo_cargo, case=False, na=False))
+    )
+    
+    # Agregar filtro de horario si aplica
+    if horario:
+        filtro = filtro & (df["int_horario"] == horario)
+    else:
+        filtro = filtro & (df["int_horario"] == "sin dato")
+    
+    df_filtrado = df[filtro]
+    
+    if df_filtrado.empty:
+        return {}
+    
+    # Extraer valores de cada componente
+    row = df_filtrado.iloc[0]
+    resultado = {}
+    
+    for comp in COMPONENTES:
+        valor = row.get(comp)
+        if pd.notna(valor) and valor != 0:
+            resultado[comp] = float(valor)
+    
+    return resultado
+
+
+def calcular_variacion_componentes(
+    tarifa: str,
+    region: str,
+    anio_actual: int,
+    anio_anterior: int,
+    horario: Optional[str] = None,
+    tipo_cargo: str = "Variable"
+) -> List[dict]:
+    """
+    Calcula la variación de cada componente entre dos diciembres.
+    
+    Args:
+        tarifa: Código de tarifa
+        region: Nombre de la región/división
+        anio_actual: Año de análisis
+        anio_anterior: Año de comparación
+        horario: "B", "I", "P" para tarifas horarias, None para simples
+        tipo_cargo: "Variable" o "Capacidad"
+        
+    Returns:
+        Lista de diccionarios ordenados por impacto (abs(variación)) descendente
+    """
+    comp_actual = get_componentes_diciembre(tarifa, region, anio_actual, horario, tipo_cargo)
+    comp_anterior = get_componentes_diciembre(tarifa, region, anio_anterior, horario, tipo_cargo)
+    
+    # Obtener todos los componentes presentes en ambos años
+    todos_componentes = set(comp_actual.keys()) | set(comp_anterior.keys())
+    
+    resultados = []
+    
+    for comp in todos_componentes:
+        actual = comp_actual.get(comp)
+        anterior = comp_anterior.get(comp)
+        
+        # Calcular variación absoluta y porcentual
+        var_absoluta = None
+        var_pct = None
+        
+        if actual is not None and anterior is not None:
+            var_absoluta = actual - anterior
+            if anterior != 0:
+                var_pct = ((actual / anterior) - 1) * 100
+        elif actual is not None and anterior is None:
+            var_absoluta = actual
+            var_pct = 100.0  # 100% nuevo
+        elif anterior is not None and actual is None:
+            var_absoluta = -anterior
+            var_pct = -100.0  # -100% eliminado
+        
+        resultados.append({
+            "componente": comp,
+            "nombre": COMPONENTES_NOMBRES.get(comp, comp),
+            "anterior": anterior,
+            "actual": actual,
+            "var_absoluta": var_absoluta,
+            "var_pct": var_pct
+        })
+    
+    # Ordenar por impacto (abs(variación absoluta)) descendente
+    resultados.sort(key=lambda x: abs(x["var_absoluta"]) if x["var_absoluta"] is not None else 0, reverse=True)
+    
+    return resultados

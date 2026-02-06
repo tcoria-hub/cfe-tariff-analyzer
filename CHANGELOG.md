@@ -8,6 +8,32 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-2.2: Desglose de Variación por Componente
+**Tiempo de ciclo:** ~45 minutos
+
+#### Implementado
+- Funciones `get_componentes_diciembre()` y `calcular_variacion_componentes()` en data_loader.py
+- Sección "🔍 Desglose por Componente" con gráficas de barras horizontales
+- Ordenamiento por impacto (mayor variación absoluta primero)
+- Colores: Rojo (subió), Verde (bajó)
+- **Reorganización de UI con pestañas** `[DIST] [GDMTH] [GDMTO]` por tarifa
+- Desglose de tarifas horarias en 3 columnas (Base | Intermedia | Punta)
+
+#### Decisiones Clave
+- **Pestañas por tarifa**: Para evitar scroll infinito con múltiples tarifas
+- **Componentes dinámicos**: Solo se muestran los que tienen datos en el CSV
+
+#### Archivos Modificados
+- `scripts/data_loader.py` - Nuevas funciones y constantes de componentes
+- `scripts/app.py` - Pestañas st.tabs(), sección de desglose, versión v1.3.0
+
+---
+
+### 🎉 FEATURE 2 COMPLETADO
+Feature 2 "Comparativo Diciembre vs Diciembre" 100% implementado (3/3 historias)
+
+---
+
 ### HU-2.3: Gráfica Comparativa de Cierres
 **Tiempo de ciclo:** ~1 hora
 
