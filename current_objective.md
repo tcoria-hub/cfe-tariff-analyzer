@@ -3,7 +3,8 @@
 > Sin objetivo activo. Usa `@start-objective HU-X.X` para iniciar una nueva historia.
 
 ## Estado
-✅ **TODOS LOS FEATURES COMPLETADOS**
+✅ **TODOS LOS FEATURES COMPLETADOS** (Features 0-3)
+⏳ **Feature 4 pendiente** (Operación y Mantenimiento)
 
 ## Métricas Acumuladas
 | Historia | Tiempo de Ciclo | Fecha |
@@ -14,6 +15,7 @@
 | HU-1.2   | (con HU-1.1)    | 2026-02-05 |
 | HU-1.3   | ~15 minutos     | 2026-02-05 |
 | HU-1.4   | ~10 minutos     | 2026-02-05 |
+| HU-1.5   | ~15 minutos     | 2026-02-06 |
 | HU-2.1   | ~1 hora         | 2026-02-05 |
 | HU-2.2   | ~45 minutos     | 2026-02-05 |
 | HU-2.3   | ~1 hora         | 2026-02-05 |
@@ -30,6 +32,7 @@
 | Feature 1 | Selector Geográfico y de Tarifas | ✅ |
 | Feature 2 | Comparativo Diciembre vs Diciembre | ✅ |
 | Feature 3 | Análisis de Promedio Anual e Inteligencia Horaria | ✅ |
+| Feature 4 | Operación y Mantenimiento | ⏳ |
 
 ## Referencias
 - [BACKLOG.md](.spec/BACKLOG.md)

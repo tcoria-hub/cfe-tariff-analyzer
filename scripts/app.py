@@ -177,10 +177,12 @@ if division_seleccionada:
     # Crear opciones con formato "CÓDIGO - Descripción"
     opciones_tarifa = []
     tarifa_map = {}  # Para mapear la opción al código
+    tarifa_descripcion = {}  # HU-1.5: Para mapear código a descripción completa
     for _, row in df_tarifas_disp.iterrows():
         opcion = f"{row['tarifa']} - {row['descripcion']}"
         opciones_tarifa.append(opcion)
         tarifa_map[opcion] = row['tarifa']
+        tarifa_descripcion[row['tarifa']] = row['descripcion']
     
     tarifas_opciones = st.multiselect(
         "Tarifas de interés",
@@ -278,6 +280,11 @@ if tarifas_seleccionadas:
             )
             
             if resultado["disponible"]:
+                # === HU-1.5: Descripción completa de la tarifa seleccionada ===
+                descripcion_tarifa = tarifa_descripcion.get(tarifa, "")
+                if descripcion_tarifa:
+                    st.info(f"**{tarifa}** — {descripcion_tarifa}")
+                
                 # === TABLA RESUMEN ===
                 st.markdown("##### 📋 Resumen de Tarifas")
                 

@@ -1,6 +1,6 @@
 # BACKLOG - CFE Tariff Analyzer MVP
 
-> **Última actualización:** 2026-02-05
+> **Última actualización:** 2026-02-06
 > **Versión:** 1.0.0
 
 ## Estado del Proyecto
@@ -202,6 +202,38 @@ Entonces: Ve una lista de tarifas con formato "CÓDIGO - Descripción"
 Dado que: El usuario ha completado los selectores anteriores
 Cuando: Selecciona el año "2024"
 Entonces: El sistema establece 2024 como año de análisis y 2023 como año de comparación
+```
+
+---
+
+### ✅ Historia de Usuario 1.5: Descripción Completa de Tarifa Seleccionada
+
+**Como:** Usuario de la aplicación  
+**Quiero:** Ver la descripción completa de la tarifa que he seleccionado  
+**Para poder:** Entender claramente qué tipo de tarifa estoy analizando sin memorizar códigos
+
+#### Criterios de Aceptación
+
+1. Al seleccionar una tarifa, se muestra su descripción completa encima de "Resumen de Tarifas"
+2. La descripción incluye el nombre completo de la tarifa (ej: "Gran demanda baja tensión")
+3. La descripción se actualiza dinámicamente al cambiar la tarifa seleccionada
+4. Si no hay tarifa seleccionada, no se muestra descripción
+5. El formato visual es claro y destacado (ej: texto en negrita o con estilo informativo)
+
+#### Casos de Prueba
+
+- **CP-1.5.1:** Al seleccionar "GDBT", se muestra "Gran demanda baja tensión" arriba de "Resumen de Tarifas"
+- **CP-1.5.2:** Al seleccionar "GDMTH", se muestra "Gran demanda en media tensión horaria"
+- **CP-1.5.3:** Al seleccionar "PDBT", se muestra "Pequeña demanda baja tensión"
+- **CP-1.5.4:** Al cambiar de tarifa, la descripción se actualiza inmediatamente
+
+**Formato BDD:**
+
+```gherkin
+Dado que: El usuario ha seleccionado Estado, Municipio, Año y una Tarifa
+Cuando: La pantalla de análisis se renderiza
+Entonces: Muestra la descripción completa de la tarifa (ej: "Gran demanda baja tensión") 
+Y: La descripción aparece arriba de la sección "Resumen de Tarifas"
 ```
 
 ---
@@ -566,6 +598,7 @@ Y: Streamlit Cloud inicia re-deploy automático
 | 1 | 1.2 | Selector de Municipio con Mapeo a División | ✅ |
 | 1 | 1.3 | Selector Dinámico de Tarifas | ✅ |
 | 1 | 1.4 | Selector de Año de Análisis | ✅ |
+| 1 | 1.5 | Descripción Completa de Tarifa Seleccionada | ✅ |
 | 2 | 2.1 | KPI de Variación Total Diciembre | ✅ |
 | 2 | 2.2 | Desglose de Variación por Componente | ✅ |
 | 2 | 2.3 | Gráfica Comparativa de Cierres | ✅ |
@@ -578,4 +611,4 @@ Y: Streamlit Cloud inicia re-deploy automático
 | 4 | 4.2 | Persistencia de Datos via GitHub | ⏳ |
 | 4 | 4.3 | Gestión de Catálogo de Regiones | ⏳ |
 
-**Total:** 17 Historias de Usuario en 5 Features
+**Total:** 18 Historias de Usuario en 5 Features

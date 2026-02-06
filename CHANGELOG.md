@@ -6,6 +6,26 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2026-02-06]
+
+### HU-1.5: Descripción Completa de Tarifa Seleccionada
+**Tiempo de ciclo:** ~15 minutos
+
+#### Implementado
+- Descripción completa de la tarifa visible arriba de "Resumen de Tarifas"
+- Diccionario `tarifa_descripcion` para mapeo de código a descripción
+- Componente visual con `st.info()` mostrando "**CÓDIGO** — Descripción"
+- Actualización dinámica al cambiar de tarifa
+
+#### Decisiones Clave
+- **Reutilización de datos existentes:** Se aprovechó la columna `descripcion` del DataFrame existente
+- **Formato visual:** `st.info()` elegido sobre `st.markdown()` para mayor visibilidad
+
+#### Archivos Modificados
+- `scripts/app.py` - Diccionario `tarifa_descripcion` y `st.info()` con descripción
+
+---
+
 ## [2026-02-05]
 
 ### HU-3.5: Vista Consolidada para Tarifas Simples
