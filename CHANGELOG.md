@@ -8,6 +8,34 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [2026-02-05]
 
+### HU-3.4: Gráfica de Tendencia Mensual
+**Tiempo de ciclo:** ~30 minutos
+
+#### Implementado
+- Funciones `get_tendencia_mensual()` y `get_datos_tendencia_comparativa()` en data_loader.py
+- Constantes `MESES_ORDEN` y `MESES_ABREV` para ordenamiento
+- Sección "📈 Tendencia Mensual" con gráficas de líneas
+- Para tarifas horarias: 3 gráficas en columnas (Base | Intermedia | Punta)
+- Para tarifas simples: una sola gráfica
+- Colores: Azul (año anterior), Rojo (año actual)
+- Marcadores + hover interactivo
+
+#### Archivos Modificados
+- `scripts/data_loader.py` - Funciones de tendencia mensual
+- `scripts/app.py` - Sección de gráficas de líneas, versión v1.4.0
+
+---
+
+### HU-3.2: Detección Automática de Estructura Horaria
+**Tiempo de ciclo:** N/A (implementada previamente en HU-1.3)
+
+#### Ya implementado
+- Constante `TARIFAS_HORARIAS = {"GDMTH", "DIST", "DIT"}`
+- Función `es_tarifa_horaria()` para clasificación
+- Vistas diferenciadas en toda la app según tipo de tarifa
+
+---
+
 ### HU-2.2: Desglose de Variación por Componente
 **Tiempo de ciclo:** ~45 minutos
 

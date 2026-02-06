@@ -566,3 +566,130 @@ def calcular_variacion_componentes(
     resultados.sort(key=lambda x: abs(x["var_absoluta"]) if x["var_absoluta"] is not None else 0, reverse=True)
     
     return resultados
+
+
+# Orden cronológico de meses
+MESES_ORDEN = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+]
+
+# Abreviaciones para gráficas
+MESES_ABREV = {
+    'enero': 'Ene', 'febrero': 'Feb', 'marzo': 'Mar', 'abril': 'Abr',
+    'mayo': 'May', 'junio': 'Jun', 'julio': 'Jul', 'agosto': 'Ago',
+    'septiembre': 'Sep', 'octubre': 'Oct', 'noviembre': 'Nov', 'diciembre': 'Dic'
+}
+
+
+def get_tendencia_mensual(
+    tarifa: str,
+    region: str,
+    anio: int,
+    horario: Optional[str] = None,
+    tipo_cargo: str = "Variable"
+) -> List[dict]:
+    """
+    Obtiene los valores mensuales de un cargo para todo el año.
+    
+    Args:
+        tarifa: Código de tarifa
+        region: Nombre de la región/división
+        anio: Año a consultar
+        horario: "B", "I", "P" para tarifas horarias, None para simples
+        tipo_cargo: "Variable" o "Capacidad"
+        
+    Returns:
+        Lista de diccionarios con mes y valor, ordenados cronológicamente
+    """
+    df = load_tarifas()
+    
+    # Normalizar región
+    region_norm = normalizar_texto(region)
+    
+    # Filtrar por tarifa, región, año y tipo de cargo
+    filtro = (
+        (df["tarifa"] == tarifa) &
+        (df["region"] == region_norm) &
+        (df["anio"] == anio) &
+        (df["cargo"].str.contains(tipo_cargo, case=False, na=False))
+    )
+    
+    # Agregar filtro de horario si aplica
+    if horario:
+        filtro = filtro & (df["int_horario"] == horario)
+    else:
+        filtro = filtro & (df["int_horario"] == "sin dato")
+    
+    df_filtrado = df[filtro]
+    
+    # Crear diccionario de mes -> valor
+    datos_mes = {}
+    for _, row in df_filtrado.iterrows():
+        mes = row["mes"].lower()
+        valor = row["total"]
+        if pd.notna(valor):
+            datos_mes[mes] = float(valor)
+    
+    # Construir lista ordenada por mes
+    resultados = []
+    for mes in MESES_ORDEN:
+        valor = datos_mes.get(mes)
+        resultados.append({
+            "mes": mes,
+            "mes_abrev": MESES_ABREV.get(mes, mes[:3].title()),
+            "mes_num": MESES_ORDEN.index(mes) + 1,
+            "valor": valor
+        })
+    
+    return resultados
+
+
+def get_datos_tendencia_comparativa(
+    tarifa: str,
+    region: str,
+    anio_actual: int,
+    anio_anterior: int,
+    horario: Optional[str] = None,
+    tipo_cargo: str = "Variable"
+) -> List[dict]:
+    """
+    Obtiene datos para gráfica de tendencia comparando dos años.
+    
+    Args:
+        tarifa: Código de tarifa
+        region: Nombre de la región/división
+        anio_actual: Año de análisis
+        anio_anterior: Año de comparación
+        horario: "B", "I", "P" para tarifas horarias, None para simples
+        tipo_cargo: "Variable" o "Capacidad"
+        
+    Returns:
+        Lista de diccionarios listos para Plotly (mes, año, valor)
+    """
+    tendencia_actual = get_tendencia_mensual(tarifa, region, anio_actual, horario, tipo_cargo)
+    tendencia_anterior = get_tendencia_mensual(tarifa, region, anio_anterior, horario, tipo_cargo)
+    
+    datos = []
+    
+    # Agregar datos del año anterior
+    for item in tendencia_anterior:
+        if item["valor"] is not None:
+            datos.append({
+                "Mes": item["mes_abrev"],
+                "Mes_Num": item["mes_num"],
+                "Año": str(anio_anterior),
+                "Valor": item["valor"]
+            })
+    
+    # Agregar datos del año actual
+    for item in tendencia_actual:
+        if item["valor"] is not None:
+            datos.append({
+                "Mes": item["mes_abrev"],
+                "Mes_Num": item["mes_num"],
+                "Año": str(anio_actual),
+                "Valor": item["valor"]
+            })
+    
+    return datos

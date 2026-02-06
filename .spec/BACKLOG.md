@@ -338,7 +338,7 @@ Entonces: Muestra "Promedio Anual: $X.XX" con delta vs año anterior
 
 ---
 
-### ⏳ Historia de Usuario 3.2: Detección Automática de Estructura Horaria
+### ✅ Historia de Usuario 3.2: Detección Automática de Estructura Horaria
 
 **Como:** Sistema  
 **Quiero:** Identificar automáticamente si la tarifa seleccionada tiene cargos horarios  
@@ -388,7 +388,7 @@ Entonces: Identifica int_horario = [B, I, P] y activa modo "tarifa horaria"
 
 ---
 
-### ⏳ Historia de Usuario 3.4: Gráfica de Tendencia Mensual
+### ✅ Historia de Usuario 3.4: Gráfica de Tendencia Mensual
 
 **Como:** Analista de costos  
 **Quiero:** Ver una gráfica de líneas con la evolución mensual de ambos años  
@@ -452,9 +452,9 @@ Entonces: Ve una gráfica de líneas comparando tendencia mensual de ambos años
 | 2 | 2.2 | Desglose de Variación por Componente | ✅ |
 | 2 | 2.3 | Gráfica Comparativa de Cierres | ✅ |
 | 3 | 3.1 | KPI de Promedio Anual | ⏳ |
-| 3 | 3.2 | Detección Automática de Estructura Horaria | ⏳ |
+| 3 | 3.2 | Detección Automática de Estructura Horaria | ✅ |
 | 3 | 3.3 | Vista Segmentada por Horario | ⏳ |
-| 3 | 3.4 | Gráfica de Tendencia Mensual | ⏳ |
+| 3 | 3.4 | Gráfica de Tendencia Mensual | ✅ |
 | 3 | 3.5 | Vista Consolidada para Tarifas Simples | ⏳ |
 
 **Total:** 14 Historias de Usuario en 4 Features

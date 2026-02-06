@@ -20,6 +20,7 @@ from data_loader import (
     verificar_match_regiones,
     calcular_variacion_diciembre,
     calcular_variacion_componentes,
+    get_datos_tendencia_comparativa,
 )
 
 # Configuración de la página
@@ -502,6 +503,81 @@ if tarifas_seleccionadas:
                                 margin=dict(l=10, r=10, t=40, b=40)
                             )
                             st.plotly_chart(fig_comp, use_container_width=True)
+                
+                # === GRÁFICA DE TENDENCIA MENSUAL (HU-3.4) ===
+                st.markdown("##### 📈 Tendencia Mensual")
+                
+                if resultado["es_horaria"]:
+                    # Para tarifas horarias: mostrar tendencia de cada horario
+                    horarios_tendencia = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
+                    cols_tendencia = st.columns(3)
+                    
+                    for idx, (horario_key, horario_nombre) in enumerate(horarios_tendencia):
+                        with cols_tendencia[idx]:
+                            datos_tend = get_datos_tendencia_comparativa(
+                                tarifa=tarifa, region=division_seleccionada,
+                                anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                                horario=horario_key, tipo_cargo="Variable"
+                            )
+                            
+                            if datos_tend:
+                                df_tend = pd.DataFrame(datos_tend)
+                                df_tend = df_tend.sort_values("Mes_Num")
+                                
+                                fig_tend = px.line(
+                                    df_tend, x="Mes", y="Valor", color="Año",
+                                    title=f"{horario_nombre}",
+                                    markers=True,
+                                    color_discrete_map={
+                                        str(anio_comparativo): "#636EFA",
+                                        str(anio_seleccionado): "#EF553B"
+                                    }
+                                )
+                                fig_tend.update_layout(
+                                    xaxis_title="", yaxis_title="$/kWh",
+                                    height=280, showlegend=True,
+                                    legend=dict(orientation="h", yanchor="bottom", y=1.02),
+                                    margin=dict(l=10, r=10, t=50, b=30)
+                                )
+                                fig_tend.update_traces(
+                                    hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>"
+                                )
+                                st.plotly_chart(fig_tend, use_container_width=True)
+                            else:
+                                st.info(f"Sin datos para {horario_nombre}")
+                else:
+                    # Para tarifas simples: una sola gráfica
+                    datos_tend = get_datos_tendencia_comparativa(
+                        tarifa=tarifa, region=division_seleccionada,
+                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                        horario=None, tipo_cargo="Variable"
+                    )
+                    
+                    if datos_tend:
+                        df_tend = pd.DataFrame(datos_tend)
+                        df_tend = df_tend.sort_values("Mes_Num")
+                        
+                        fig_tend = px.line(
+                            df_tend, x="Mes", y="Valor", color="Año",
+                            title="Evolución Mensual Variable (Energía)",
+                            markers=True,
+                            color_discrete_map={
+                                str(anio_comparativo): "#636EFA",
+                                str(anio_seleccionado): "#EF553B"
+                            }
+                        )
+                        fig_tend.update_layout(
+                            xaxis_title="Mes", yaxis_title="$/kWh",
+                            height=350, showlegend=True,
+                            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+                            margin=dict(l=10, r=10, t=50, b=40)
+                        )
+                        fig_tend.update_traces(
+                            hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>"
+                        )
+                        st.plotly_chart(fig_tend, use_container_width=True)
+                    else:
+                        st.info("Sin datos de tendencia mensual")
             else:
                 st.warning(f"No hay datos de diciembre para {tarifa} en {anio_seleccionado} o {anio_comparativo}")
 else:
@@ -530,4 +606,4 @@ with st.expander("Ver detalles de los datos"):
 
 # Footer
 st.markdown("---")
-st.caption("CFE Tariff Analyzer v1.3.0 | Desarrollado con Streamlit")
+st.caption("CFE Tariff Analyzer v1.4.0 | Desarrollado con Streamlit")
