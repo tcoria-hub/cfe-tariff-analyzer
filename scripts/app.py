@@ -22,6 +22,11 @@ from data_loader import (
     calcular_variacion_componentes,
     get_datos_tendencia_comparativa,
     calcular_variacion_promedio_anual,
+    mes_a_numero,
+    numero_a_mes,
+    calcular_rango_12_meses,
+    pivotar_historico_por_mes,
+    MESES_NOMBRES,
 )
 
 # Configuración de la página
@@ -716,14 +721,104 @@ if tarifas_seleccionadas:
         else:
             st.info("👆 Selecciona Estado, Municipio, Tarifa y Año para ver el análisis de comportamiento")
     
-    # Tab 2: Generar Histórico (Feature 5 - placeholder para HU-5.1)
+    # Tab 2: Generar Histórico (HU-5.1)
     with modo_tabs[1]:
         if division_seleccionada and tarifas_seleccionadas and anio_seleccionado:
-            st.info("🚧 Esta funcionalidad se implementará en HU-5.1: Tabla Histórica de Tarifas por Rango de 12 Meses")
-            st.markdown("""
-            **Próximamente:** Podrás generar una tabla con el histórico completo de una tarifa 
-            y división en un rango de 12 meses, con opción de exportar a CSV.
-            """)
+            # Una tarifa para el histórico (selector si hay varias)
+            if len(tarifas_seleccionadas) == 1:
+                tarifa_historico = tarifas_seleccionadas[0]
+            else:
+                tarifa_historico = st.selectbox(
+                    "Tarifa para histórico",
+                    options=tarifas_seleccionadas,
+                    key="tarifa_historico",
+                    help="Elige la tarifa para generar la tabla de 12 meses"
+                )
+            
+            st.subheader("📋 Rango de 12 meses")
+            mes_final_nombre = st.selectbox(
+                "Mes final del rango",
+                options=MESES_NOMBRES,
+                index=11,
+                key="mes_final_historico",
+                help="Se calcularán 12 meses hacia atrás desde este mes y año"
+            )
+            mes_final_num = mes_a_numero(mes_final_nombre)
+            
+            # Calcular rango con casos borde
+            rango = calcular_rango_12_meses(
+                mes_final_num, anio_seleccionado, df_tarifas,
+                tarifa_historico, division_seleccionada
+            )
+            mes_inicial, anio_inicial, mes_final_ajustado, anio_final_ajustado, mensaje_info = rango
+            
+            if mensaje_info:
+                st.info(mensaje_info)
+            
+            # Filtrar datos en el rango
+            start_ord = anio_inicial * 12 + mes_inicial
+            end_ord = anio_final_ajustado * 12 + mes_final_ajustado
+            fecha_ord = df_tarifas["anio"] * 12 + df_tarifas["mes_numero"]
+            mask_hist = (
+                (df_tarifas["region"] == division_seleccionada.upper().strip()) &
+                (df_tarifas["tarifa"] == tarifa_historico) &
+                (fecha_ord >= start_ord) &
+                (fecha_ord <= end_ord)
+            )
+            df_hist = df_tarifas.loc[mask_hist].copy()
+            df_hist = df_hist.sort_values(by=["anio", "mes_numero", "cargo", "int_horario"], ignore_index=True)
+
+            # Vista pivotada: una fila por mes (Año, Mes, Fecha, Cargo Fijo, Base, Intermedia, Punta, Cargo Cap)
+            df_vista = pivotar_historico_por_mes(df_hist)
+
+            def fmt_miles(v):
+                if v is None or (isinstance(v, float) and pd.isna(v)):
+                    return ""
+                return f"{float(v):,.2f}"
+
+            def fmt_cuatro(v):
+                if v is None or (isinstance(v, float) and pd.isna(v)):
+                    return ""
+                return f"{float(v):.4f}"
+
+            df_display = df_vista.copy()
+            for col in ["Cargo Fijo", "Cargo Cap"]:
+                if col in df_display.columns:
+                    df_display[col] = df_display[col].apply(fmt_miles)
+            for col in ["Base", "Intermedia", "Punta"]:
+                if col in df_display.columns:
+                    df_display[col] = df_display[col].apply(fmt_cuatro)
+
+            st.caption(f"**Total:** {len(df_display)} meses. Rango: {numero_a_mes(mes_inicial)} {anio_inicial} — {numero_a_mes(mes_final_ajustado)} {anio_final_ajustado}")
+
+            if df_display.empty:
+                st.warning("No hay datos en el rango calculado para esta tarifa y división.")
+            else:
+                st.dataframe(
+                    df_display,
+                    use_container_width=True,
+                    column_config={
+                        "Año": st.column_config.NumberColumn("Año", format="%d", width="small"),
+                        "Mes": st.column_config.TextColumn("Mes", width="medium"),
+                        "Fecha": st.column_config.TextColumn("Fecha", width="small"),
+                        "Cargo Fijo": st.column_config.TextColumn("Cargo Fijo", width="medium"),
+                        "Base": st.column_config.TextColumn("Base", width="medium"),
+                        "Intermedia": st.column_config.TextColumn("Intermedia", width="medium"),
+                        "Punta": st.column_config.TextColumn("Punta", width="medium"),
+                        "Cargo Cap": st.column_config.TextColumn("Cargo Cap", width="medium"),
+                    },
+                )
+
+                # Exportar CSV: mismo contenido mostrado (vista pivotada formateada)
+                nombre_archivo = f"historico_{tarifa_historico}_{division_seleccionada.replace(' ', '_')}_{numero_a_mes(mes_inicial)}{anio_inicial}_{numero_a_mes(mes_final_ajustado)}{anio_final_ajustado}.csv"
+                csv_bytes = df_display.to_csv(index=False, encoding="utf-8")
+                st.download_button(
+                    "Descargar CSV",
+                    data=csv_bytes,
+                    file_name=nombre_archivo,
+                    mime="text/csv",
+                    key="download_historico_csv"
+                )
         else:
             st.info("👆 Selecciona Estado, Municipio, Tarifa y Año para generar el histórico")
     

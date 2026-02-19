@@ -10,7 +10,7 @@
 - ✅ Feature 2: Comparativo Diciembre vs Diciembre
 - ✅ Feature 3: Análisis de Promedio Anual e Inteligencia Horaria
 - ⏳ Feature 4: Operación y Mantenimiento
-- ⏳ Feature 5: Histórico de Tarifas por Rango de 12 Meses
+- ✅ Feature 5: Histórico de Tarifas por Rango de 12 Meses
 
 ---
 
@@ -590,7 +590,7 @@ Y: Streamlit Cloud inicia re-deploy automático
 
 ---
 
-## FEATURE 5: Histórico de Tarifas por Rango de 12 Meses ⏳
+## FEATURE 5: Histórico de Tarifas por Rango de 12 Meses ✅
 
 ### Descripción del Feature
 
@@ -602,7 +602,7 @@ Y: Streamlit Cloud inicia re-deploy automático
 
 ---
 
-### Historia de Usuario 5.1: Tabla Histórica de Tarifas por Rango de 12 Meses
+### ✅ Historia de Usuario 5.1: Tabla Histórica de Tarifas por Rango de 12 Meses
 
 **Como:** Analista de costos energéticos  
 **Quiero:** Ver una tabla con el histórico completo de una tarifa y división en un rango de 12 meses calculado desde un mes final seleccionado  
@@ -781,7 +781,7 @@ Y: Los selectores de Estado/Municipio/Tarifa mantienen sus valores si aplican
 | 4 | 4.1 | Validación y Preview de CSV | ⏳ |
 | 4 | 4.2 | Persistencia de Datos via GitHub | ⏳ |
 | 4 | 4.3 | Gestión de Catálogo de Regiones | ⏳ |
-| 5 | 5.1 | Tabla Histórica de Tarifas por Rango de 12 Meses | ⏳ |
+| 5 | 5.1 | Tabla Histórica de Tarifas por Rango de 12 Meses | 🔄 |
 | 5 | 5.2 | Navegación entre Modos de Análisis | ✅ |
 
 **Total:** 20 Historias de Usuario en 6 Features

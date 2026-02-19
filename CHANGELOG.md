@@ -6,6 +6,28 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2026-02-19]
+
+### HU-5.1: Tabla Histórica de Tarifas por Rango de 12 Meses
+**Tiempo de ciclo:** ~1 día (~26 horas)
+
+#### Implementado
+- Selector "Mes Final del Rango" (enero–diciembre) en tab Generar Histórico.
+- Funciones helper: `mes_a_numero`, `numero_a_mes`, `calcular_rango_12_meses` con casos borde (mes posterior/al anterior al rango disponible, menos de 12 meses).
+- Columna `mes_numero` en carga de tarifas; tabla pivotada una fila por mes con columnas: Año, Mes, Fecha (abrev.), Cargo Fijo, Base, Intermedia, Punta, Cargo Cap.
+- Formato numérico: 2 decimales + miles (Fijo/Cap), 4 decimales (Base/Intermedia/Punta).
+- Botón "Descargar CSV" que exporta la vista mostrada con nombre dinámico.
+
+#### Decisiones clave
+- Vista pivotada para legibilidad (referencia tipo hoja de cálculo); CSV exporta exactamente lo mostrado.
+- `MESES_ABREV_POR_NUM` para no colisionar con el dict `MESES_ABREV` usado en gráficas.
+
+#### Archivos modificados
+- `scripts/data_loader.py` – `mes_a_numero`, `numero_a_mes`, `calcular_rango_12_meses`, `pivotar_historico_por_mes`, `MESES_ABREV_POR_NUM`, `mes_numero` en load_tarifas.
+- `scripts/app.py` – Tab Generar Histórico: selector mes final, pivot, formato, column_config, download CSV.
+
+---
+
 ## [2026-02-18]
 
 ### HU-5.2: Navegación entre Modos de Análisis

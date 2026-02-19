@@ -5,11 +5,19 @@ Funciones para carga y gestión de datos desde archivos CSV.
 Todas las funciones usan cache de Streamlit para optimizar rendimiento.
 """
 
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import unicodedata
 import pandas as pd
 import streamlit as st
 from pathlib import Path
+
+# Orden de meses en español (minúsculas) para conversión 1-12
+MESES_NOMBRES = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+]
+# Abreviaturas de mes por número (1-12) para columna Fecha (ene-24, feb-23, etc.). No confundir con MESES_ABREV (dict) más abajo.
+MESES_ABREV_POR_NUM = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
 
 def normalizar_texto(texto: str) -> str:
@@ -30,6 +38,39 @@ def normalizar_texto(texto: str) -> str:
     texto = unicodedata.normalize('NFD', texto)
     texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
     return texto
+
+def mes_a_numero(mes_nombre: str) -> int:
+    """
+    Convierte nombre de mes en español a número 1-12.
+    
+    Args:
+        mes_nombre: Nombre del mes (ej: 'enero', 'diciembre')
+        
+    Returns:
+        1-12 para meses válidos, 0 si no se reconoce
+    """
+    if not mes_nombre or pd.isna(mes_nombre):
+        return 0
+    m = str(mes_nombre).strip().lower()
+    if m in MESES_NOMBRES:
+        return MESES_NOMBRES.index(m) + 1
+    return 0
+
+
+def numero_a_mes(numero: int) -> str:
+    """
+    Convierte número 1-12 a nombre de mes en español.
+    
+    Args:
+        numero: Número de mes (1-12)
+        
+    Returns:
+        Nombre del mes (ej: 'enero') o cadena vacía si inválido
+    """
+    if 1 <= numero <= 12:
+        return MESES_NOMBRES[numero - 1]
+    return ""
+
 
 # Rutas a los archivos de datos
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -82,6 +123,10 @@ def load_tarifas() -> pd.DataFrame:
     ]
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
+    
+    # Añadir mes_numero (1-12) para ordenamiento y filtrado
+    df["mes"] = df["mes"].astype(str).str.strip().str.lower()
+    df["mes_numero"] = df["mes"].apply(mes_a_numero)
     
     return df
 
@@ -188,6 +233,139 @@ def es_tarifa_horaria(tarifa: str) -> bool:
         True si es tarifa horaria, False si es tarifa simple
     """
     return tarifa.upper() in TARIFAS_HORARIAS
+
+
+def calcular_rango_12_meses(
+    mes_final: int,
+    anio: int,
+    df_tarifas: pd.DataFrame,
+    tarifa: str,
+    division: str,
+) -> Tuple[int, int, int, int, Optional[str]]:
+    """
+    Calcula el rango de 12 meses para histórico, aplicando casos borde.
+    
+    Args:
+        mes_final: Número de mes final (1-12)
+        anio: Año del mes final seleccionado
+        df_tarifas: DataFrame de tarifas (con columnas anio, mes_numero, region, tarifa)
+        tarifa: Código de tarifa
+        division: División/región CFE (se normaliza)
+        
+    Returns:
+        (mes_inicial, año_inicial, mes_final_ajustado, año_final_ajustado, mensaje_info)
+        mensaje_info es None si no hubo ajuste, o texto informativo en casos borde.
+    """
+    div_norm = normalizar_texto(division)
+    tarifa_norm = tarifa.upper() if tarifa else ""
+    
+    mask = (df_tarifas["region"] == div_norm) & (df_tarifas["tarifa"] == tarifa_norm)
+    df_filt = df_tarifas.loc[mask, ["anio", "mes_numero"]].drop_duplicates()
+    
+    if df_filt.empty:
+        return (1, anio, 12, anio, "Sin datos para esta tarifa y división.")
+    
+    df_filt = df_filt.sort_values(["anio", "mes_numero"])
+    first = df_filt.iloc[0]
+    last = df_filt.iloc[-1]
+    first_anio, first_mes = int(first["anio"]), int(first["mes_numero"])
+    last_anio, last_mes = int(last["anio"]), int(last["mes_numero"])
+    
+    first_ord = first_anio * 12 + first_mes
+    last_ord = last_anio * 12 + last_mes
+    desired_end_ord = anio * 12 + mes_final
+    desired_start_ord = desired_end_ord - 11
+    
+    if desired_end_ord > last_ord:
+        end_ord = last_ord
+        start_ord = max(end_ord - 11, first_ord)
+        end_anio = (end_ord - 1) // 12
+        end_mes = (end_ord - 1) % 12 + 1
+        start_anio = (start_ord - 1) // 12
+        start_mes = (start_ord - 1) % 12 + 1
+        msg = f"Último mes disponible: {numero_a_mes(end_mes)} {end_anio}. Mostrando histórico de 12 meses hasta esa fecha."
+        return (start_mes, start_anio, end_mes, end_anio, msg)
+    
+    if desired_start_ord < first_ord:
+        start_ord = first_ord
+        end_ord = min(start_ord + 11, last_ord)
+        start_anio = (start_ord - 1) // 12
+        start_mes = (start_ord - 1) % 12 + 1
+        end_anio = (end_ord - 1) // 12
+        end_mes = (end_ord - 1) % 12 + 1
+        msg = f"Primer mes disponible: {numero_a_mes(start_mes)} {start_anio}. Mostrando histórico de 12 meses desde esa fecha."
+        return (start_mes, start_anio, end_mes, end_anio, msg)
+    
+    start_ord = desired_start_ord
+    end_ord = desired_end_ord
+    start_anio = (start_ord - 1) // 12
+    start_mes = (start_ord - 1) % 12 + 1
+    end_anio = (end_ord - 1) // 12
+    end_mes = (end_ord - 1) % 12 + 1
+    
+    n_meses = end_ord - start_ord + 1
+    msg = None
+    if n_meses < 12:
+        msg = f"Rango disponible: {numero_a_mes(start_mes)} {start_anio} - {numero_a_mes(end_mes)} {end_anio} ({n_meses} meses)"
+    
+    return (start_mes, start_anio, end_mes, end_anio, msg)
+
+
+def pivotar_historico_por_mes(df_hist: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convierte el histórico en formato largo a una fila por (Año, Mes) con columnas
+    Cargo Fijo, Base, Intermedia, Punta, Cargo Cap para mejor legibilidad.
+
+    Espera df_hist con columnas: anio, mes, mes_numero, cargo, int_horario, total.
+    Para tarifas simples (int_horario "sin dato") el total variable va en Base.
+    """
+    if df_hist.empty or "total" not in df_hist.columns or "anio" not in df_hist.columns:
+        return pd.DataFrame(columns=["Año", "Mes", "Fecha", "Cargo Fijo", "Base", "Intermedia", "Punta", "Cargo Cap"])
+
+    df = df_hist[["anio", "mes_numero", "mes", "cargo", "int_horario", "total"]].copy()
+    df["cargo"] = df["cargo"].astype(str).str.strip()
+    df["int_horario"] = df["int_horario"].astype(str).str.strip().str.upper()
+    df["mes"] = df["mes"].astype(str).str.strip().str.lower()
+
+    rows = []
+    for (anio, mes_num), g in df.groupby(["anio", "mes_numero"], sort=True):
+        mes_num = int(mes_num)
+        anio = int(anio)
+        mes_nombre = numero_a_mes(mes_num).capitalize() if 1 <= mes_num <= 12 else g["mes"].iloc[0].capitalize()
+        fecha_abrev = f"{MESES_ABREV_POR_NUM[mes_num - 1]}-{str(anio)[-2:]}" if 1 <= mes_num <= 12 else ""
+
+        fijo = g[g["cargo"] == "Fijo"]["total"]
+        cargo_fijo = float(fijo.iloc[0]) if len(fijo) else None
+
+        var = g[g["cargo"] == "Variable (Energía)"]
+        base_val = intermedia_val = punta_val = None
+        for _, r in var.iterrows():
+            ih = r["int_horario"]
+            if ih == "B":
+                base_val = float(r["total"])
+            elif ih == "I":
+                intermedia_val = float(r["total"])
+            elif ih == "P":
+                punta_val = float(r["total"])
+            elif ih == "SIN DATO" or (pd.notna(ih) and "SIN" in str(ih).upper()):
+                if base_val is None:
+                    base_val = float(r["total"])
+
+        cap = g[g["cargo"] == "Capacidad"]["total"]
+        cargo_cap = float(cap.iloc[0]) if len(cap) else None
+
+        rows.append({
+            "Año": anio,
+            "Mes": mes_nombre,
+            "Fecha": fecha_abrev,
+            "Cargo Fijo": cargo_fijo,
+            "Base": base_val,
+            "Intermedia": intermedia_val,
+            "Punta": punta_val,
+            "Cargo Cap": cargo_cap,
+        })
+
+    return pd.DataFrame(rows)
 
 
 @st.cache_data
