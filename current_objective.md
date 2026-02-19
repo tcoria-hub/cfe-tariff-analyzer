@@ -3,36 +3,12 @@
 > Sin objetivo activo. Usa `@start-objective HU-X.X` para iniciar una nueva historia.
 
 ## Estado
-✅ **TODOS LOS FEATURES COMPLETADOS** (Features 0-3)
-⏳ **Feature 4 pendiente** (Operación y Mantenimiento)
+⏳ Esperando nuevo objetivo
 
 ## Métricas Acumuladas
-| Historia | Tiempo de Ciclo | Fecha |
-|----------|-----------------|-------|
-| HU-0.1   | ~1 hora         | 2026-02-05 |
-| HU-0.2   | ~45 minutos     | 2026-02-05 |
-| HU-1.1   | ~20 minutos     | 2026-02-05 |
-| HU-1.2   | (con HU-1.1)    | 2026-02-05 |
-| HU-1.3   | ~15 minutos     | 2026-02-05 |
-| HU-1.4   | ~10 minutos     | 2026-02-05 |
-| HU-1.5   | ~15 minutos     | 2026-02-06 |
-| HU-2.1   | ~1 hora         | 2026-02-05 |
-| HU-2.2   | ~45 minutos     | 2026-02-05 |
-| HU-2.3   | ~1 hora         | 2026-02-05 |
-| HU-3.1   | ~20 minutos     | 2026-02-05 |
-| HU-3.2   | N/A             | 2026-02-05 |
-| HU-3.3   | ~5 minutos      | 2026-02-05 |
-| HU-3.4   | ~30 minutos     | 2026-02-05 |
-| HU-3.5   | ~10 minutos     | 2026-02-05 |
-
-## Resumen de Features
-| Feature | Descripción | Estado |
-|---------|-------------|--------|
-| Feature 0 | Configuración Inicial y ETL | ✅ |
-| Feature 1 | Selector Geográfico y de Tarifas | ✅ |
-| Feature 2 | Comparativo Diciembre vs Diciembre | ✅ |
-| Feature 3 | Análisis de Promedio Anual e Inteligencia Horaria | ✅ |
-| Feature 4 | Operación y Mantenimiento | ⏳ |
+| Historia | Título | Tiempo de Ciclo | Fecha |
+|----------|--------|-----------------|-------|
+| HU-5.2   | Navegación entre Modos de Análisis | ~2 horas | 2026-02-18 |
 
 ## Referencias
 - [BACKLOG.md](.spec/BACKLOG.md)

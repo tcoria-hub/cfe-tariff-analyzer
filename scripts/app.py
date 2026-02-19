@@ -48,6 +48,18 @@ with st.spinner("Cargando datos..."):
     stats = get_data_stats()
     match_info = verificar_match_regiones()
 
+# Inicializar session_state para mantener estado entre modos
+if 'estado_seleccionado' not in st.session_state:
+    st.session_state.estado_seleccionado = "Selecciona un estado"
+if 'municipio_seleccionado' not in st.session_state:
+    st.session_state.municipio_seleccionado = None
+if 'division_seleccionada' not in st.session_state:
+    st.session_state.division_seleccionada = None
+if 'tarifas_seleccionadas' not in st.session_state:
+    st.session_state.tarifas_seleccionadas = []
+if 'anio_seleccionado' not in st.session_state:
+    st.session_state.anio_seleccionado = None
+
 # Mensaje de bienvenida
 st.header("Bienvenido")
 st.markdown("""
@@ -112,13 +124,16 @@ with col_estado:
     # Agregar placeholder al inicio de la lista
     opciones_estado = ["Selecciona un estado"] + estados
     
+    # Usar session_state para mantener el valor entre modos
+    index_estado = opciones_estado.index(st.session_state.estado_seleccionado) if st.session_state.estado_seleccionado in opciones_estado else 0
     estado_seleccionado = st.selectbox(
         "Estado",
         options=opciones_estado,
-        index=0,
+        index=index_estado,
         key="selector_estado",
         help="Selecciona tu estado para filtrar municipios"
     )
+    st.session_state.estado_seleccionado = estado_seleccionado
 
 with col_municipio:
     # El selector de municipio depende del estado seleccionado
@@ -126,13 +141,20 @@ with col_municipio:
         municipios = get_municipios(estado_seleccionado)
         opciones_municipio = ["Selecciona un municipio"] + municipios
         
+        # Mantener selección previa si aplica
+        if st.session_state.municipio_seleccionado and st.session_state.municipio_seleccionado in opciones_municipio:
+            index_municipio = opciones_municipio.index(st.session_state.municipio_seleccionado)
+        else:
+            index_municipio = 0
+        
         municipio_seleccionado = st.selectbox(
             "Municipio",
             options=opciones_municipio,
-            index=0,
+            index=index_municipio,
             key="selector_municipio",
             help="Selecciona tu municipio para identificar la División CFE"
         )
+        st.session_state.municipio_seleccionado = municipio_seleccionado if municipio_seleccionado != "Selecciona un municipio" else None
     else:
         # Selector deshabilitado si no hay estado
         st.selectbox(
@@ -142,6 +164,7 @@ with col_municipio:
             key="selector_municipio_disabled"
         )
         municipio_seleccionado = None
+        st.session_state.municipio_seleccionado = None
 
 # Mostrar selector de División si hay municipio seleccionado
 division_seleccionada = None
@@ -150,20 +173,36 @@ if estado_seleccionado != "Selecciona un estado" and municipio_seleccionado and 
     
     if len(divisiones) == 0:
         st.warning("No se encontró división para esta combinación")
+        st.session_state.division_seleccionada = None
     elif len(divisiones) == 1:
         # Solo una división: mostrar directamente
         division_seleccionada = divisiones[0]
+        st.session_state.division_seleccionada = division_seleccionada
         st.success(f"📌 **División CFE:** {division_seleccionada}")
     else:
         # Múltiples divisiones: mostrar selector
         st.info(f"📍 Este municipio pertenece a **{len(divisiones)} divisiones** de CFE. Selecciona una:")
+        # Mantener selección previa si aplica
+        if st.session_state.division_seleccionada and st.session_state.division_seleccionada in divisiones:
+            index_division = divisiones.index(st.session_state.division_seleccionada)
+        else:
+            index_division = 0
         division_seleccionada = st.selectbox(
             "División CFE",
             options=divisiones,
+            index=index_division,
             key="selector_division",
             help="Selecciona la división que corresponde a tu ubicación exacta"
         )
+        st.session_state.division_seleccionada = division_seleccionada
         st.success(f"📌 **División seleccionada:** {division_seleccionada}")
+else:
+    st.session_state.division_seleccionada = None
+    division_seleccionada = None
+
+# Usar división del session_state si está disponible
+if not division_seleccionada and st.session_state.division_seleccionada:
+    division_seleccionada = st.session_state.division_seleccionada
 
 # Selector de Tarifas (HU-1.3) - Selección múltiple
 st.markdown("---")
@@ -195,6 +234,7 @@ if division_seleccionada:
     # Extraer códigos de tarifas seleccionadas
     if tarifas_opciones:
         tarifas_seleccionadas = [tarifa_map[op] for op in tarifas_opciones]
+        st.session_state.tarifas_seleccionadas = tarifas_seleccionadas
         
         # Clasificar tarifas seleccionadas
         horarias = [t for t in tarifas_seleccionadas if es_tarifa_horaria(t)]
@@ -210,8 +250,12 @@ if division_seleccionada:
                 st.info(f"📊 **Simples:** {', '.join(simples)}")
         
         st.success(f"✅ {len(tarifas_seleccionadas)} tarifa(s) seleccionada(s)")
+    else:
+        st.session_state.tarifas_seleccionadas = []
 else:
-    # Selector deshabilitado si no hay división
+    # Sin división: selector deshabilitado y usar session_state si hay
+    if st.session_state.tarifas_seleccionadas:
+        tarifas_seleccionadas = st.session_state.tarifas_seleccionadas
     st.multiselect(
         "Tarifas de interés",
         options=["Selecciona primero Estado y Municipio"],
@@ -230,14 +274,21 @@ if tarifas_seleccionadas:
     # Obtener años disponibles (ya filtrados desde 2018)
     anios = get_anios_disponibles()
     
+    # Mantener selección previa si aplica
+    if st.session_state.anio_seleccionado and st.session_state.anio_seleccionado in anios:
+        index_anio = anios.index(st.session_state.anio_seleccionado)
+    else:
+        index_anio = len(anios) - 1  # Último año como default
+    
     # Selector de año con el más reciente como default
     anio_seleccionado = st.selectbox(
         "Año de análisis",
         options=anios,
-        index=len(anios) - 1,  # Último año como default
+        index=index_anio,
         key="selector_anio",
         help="Selecciona el año que deseas analizar. Se comparará con el año anterior."
     )
+    st.session_state.anio_seleccionado = anio_seleccionado
     
     # Calcular año comparativo
     anio_comparativo = anio_seleccionado - 1
@@ -251,208 +302,248 @@ if tarifas_seleccionadas:
     
     col_res1, col_res2, col_res3 = st.columns(3)
     with col_res1:
-        st.metric("División", division_seleccionada)
+        st.metric("División", division_seleccionada or "No seleccionada")
     with col_res2:
         st.metric("Tarifas", f"{len(tarifas_seleccionadas)} seleccionada(s)")
     with col_res3:
-        st.metric("Periodo", f"{anio_seleccionado} vs {anio_comparativo}")
+        st.metric("Periodo", f"{anio_seleccionado} vs {anio_comparativo}" if anio_seleccionado else "No seleccionado")
     
-    # KPI de Variación Total Diciembre (HU-2.1)
+    # Sistema de navegación con tabs (HU-5.2)
     st.markdown("---")
-    st.subheader("📊 Comparativo Diciembre vs Diciembre")
-    st.caption(f"Variación del costo total entre diciembre {anio_comparativo} y diciembre {anio_seleccionado}")
+    modo_tabs = st.tabs(["📊 Análisis de Comportamiento", "📋 Generar Histórico", "📥 Captura de Datos"])
     
-    # Advertencia si es el año más reciente (puede no tener diciembre)
-    if anio_seleccionado == max(anios):
-        st.warning(f"⚠️ {anio_seleccionado} es el año más reciente. Si no hay datos de diciembre, selecciona un año anterior.")
-    
-    # Pestañas por tarifa (HU-2.2 mejora de UX)
-    tabs = st.tabs(tarifas_seleccionadas)
-    
-    for tab, tarifa in zip(tabs, tarifas_seleccionadas):
-        with tab:
-            # Calcular variación
-            resultado = calcular_variacion_diciembre(
-                tarifa=tarifa,
-                region=division_seleccionada,
-                anio_actual=anio_seleccionado,
-                anio_anterior=anio_comparativo
-            )
+    # Tab 1: Análisis de Comportamiento (Features 2 y 3 existentes)
+    with modo_tabs[0]:
+        if division_seleccionada and tarifas_seleccionadas and anio_seleccionado:
+            # KPI de Variación Total Diciembre (HU-2.1)
+            st.markdown("---")
+            st.subheader("📊 Comparativo Diciembre vs Diciembre")
+            st.caption(f"Variación del costo total entre diciembre {anio_comparativo} y diciembre {anio_seleccionado}")
             
-            if resultado["disponible"]:
-                # === HU-1.5: Descripción completa de la tarifa seleccionada ===
-                descripcion_tarifa = tarifa_descripcion.get(tarifa, "")
-                if descripcion_tarifa:
-                    st.info(f"**{tarifa}** — {descripcion_tarifa}")
-                
-                # === TABLA RESUMEN ===
-                st.markdown("##### 📋 Resumen de Tarifas")
-                
-                if resultado["es_horaria"]:
-                    horarios_info = [
-                        ("B", "Base"),
-                        ("I", "Intermedia"),
-                        ("P", "Punta"),
-                        ("capacidad", "Capacidad"),
-                    ]
+            # Obtener años para la validación
+            anios = get_anios_disponibles()
+            
+            # Advertencia si es el año más reciente (puede no tener diciembre)
+            if anio_seleccionado == max(anios):
+                st.warning(f"⚠️ {anio_seleccionado} es el año más reciente. Si no hay datos de diciembre, selecciona un año anterior.")
+            
+            # Pestañas por tarifa (HU-2.2 mejora de UX)
+            tabs = st.tabs(tarifas_seleccionadas)
+            
+            for tab, tarifa in zip(tabs, tarifas_seleccionadas):
+                with tab:
+                    # Calcular variación
+                    resultado = calcular_variacion_diciembre(
+                        tarifa=tarifa,
+                        region=division_seleccionada,
+                        anio_actual=anio_seleccionado,
+                        anio_anterior=anio_comparativo
+                    )
                     
-                    col_headers = st.columns(5)
-                    col_headers[0].markdown("**Concepto**")
-                    col_headers[1].markdown(f"**Dic {anio_comparativo}**")
-                    col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
-                    col_headers[3].markdown("**Variación**")
-                    col_headers[4].markdown("**Unidad**")
-                    
-                    for key, nombre in horarios_info:
-                        datos = resultado["horarios"].get(key, {})
-                        cols = st.columns(5)
+                    if resultado["disponible"]:
+                        # === HU-1.5: Descripción completa de la tarifa seleccionada ===
+                        descripcion_tarifa = tarifa_descripcion.get(tarifa, "")
+                        if descripcion_tarifa:
+                            st.info(f"**{tarifa}** — {descripcion_tarifa}")
                         
-                        if datos.get("actual") is not None:
-                            anterior = datos.get("anterior")
-                            actual = datos.get("actual")
-                            variacion = datos.get("variacion_pct")
-                            unidad = "$/kW" if key == "capacidad" else "$/kWh"
+                        # === TABLA RESUMEN ===
+                        st.markdown("##### 📋 Resumen de Tarifas")
+                        
+                        if resultado["es_horaria"]:
+                            horarios_info = [
+                                ("B", "Base"),
+                                ("I", "Intermedia"),
+                                ("P", "Punta"),
+                                ("capacidad", "Capacidad"),
+                            ]
                             
-                            cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
-                            cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
-                            cols[2].write(f"${actual:.4f}")
-                            if variacion is not None:
-                                color = "🔴" if variacion > 0 else "🟢"
-                                cols[3].write(f"{color} {variacion:+.2f}%")
-                            else:
-                                cols[3].write("N/D")
-                            cols[4].write(unidad)
-                        else:
-                            cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
-                            cols[1].write("N/D")
-                            cols[2].write("N/D")
-                            cols[3].write("N/D")
-                            cols[4].write("-")
-                else:
-                    col_headers = st.columns(5)
-                    col_headers[0].markdown("**Concepto**")
-                    col_headers[1].markdown(f"**Dic {anio_comparativo}**")
-                    col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
-                    col_headers[3].markdown("**Variación**")
-                    col_headers[4].markdown("**Unidad**")
-                    
-                    for key, nombre, unidad in [("simple", "Variable (Energía)", "$/kWh"), ("capacidad", "Capacidad", "$/kW")]:
-                        datos = resultado["horarios"].get(key, {})
-                        cols = st.columns(5)
-                        
-                        if datos.get("actual") is not None:
-                            anterior = datos.get("anterior")
-                            actual = datos.get("actual")
-                            variacion = datos.get("variacion_pct")
+                            col_headers = st.columns(5)
+                            col_headers[0].markdown("**Concepto**")
+                            col_headers[1].markdown(f"**Dic {anio_comparativo}**")
+                            col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
+                            col_headers[3].markdown("**Variación**")
+                            col_headers[4].markdown("**Unidad**")
                             
-                            cols[0].write(f"📊 {nombre}")
-                            cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
-                            cols[2].write(f"${actual:.4f}")
-                            if variacion is not None:
-                                color = "🔴" if variacion > 0 else "🟢"
-                                cols[3].write(f"{color} {variacion:+.2f}%")
-                            else:
-                                cols[3].write("N/D")
-                            cols[4].write(unidad)
+                            for key, nombre in horarios_info:
+                                datos = resultado["horarios"].get(key, {})
+                                cols = st.columns(5)
+                                
+                                if datos.get("actual") is not None:
+                                    anterior = datos.get("anterior")
+                                    actual = datos.get("actual")
+                                    variacion = datos.get("variacion_pct")
+                                    unidad = "$/kW" if key == "capacidad" else "$/kWh"
+                                    
+                                    cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
+                                    cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
+                                    cols[2].write(f"${actual:.4f}")
+                                    if variacion is not None:
+                                        color = "🔴" if variacion > 0 else "🟢"
+                                        cols[3].write(f"{color} {variacion:+.2f}%")
+                                    else:
+                                        cols[3].write("N/D")
+                                    cols[4].write(unidad)
+                                else:
+                                    cols[0].write(f"⏰ {nombre}" if key != "capacidad" else f"⚡ {nombre}")
+                                    cols[1].write("N/D")
+                                    cols[2].write("N/D")
+                                    cols[3].write("N/D")
+                                    cols[4].write("-")
                         else:
-                            cols[0].write(f"📊 {nombre}")
-                            cols[1].write("N/D")
-                            cols[2].write("N/D")
-                            cols[3].write("N/D")
-                            cols[4].write("-")
-                
-                # === GRÁFICA COMPARATIVA ===
-                st.markdown("##### 📊 Gráfica Comparativa")
-                
-                datos_kwh = []
-                datos_kw = []
-                
-                for key, datos_cargo in resultado["horarios"].items():
-                    if datos_cargo.get("actual") is not None or datos_cargo.get("anterior") is not None:
-                        if key == "B":
-                            concepto, es_capacidad = "Base", False
-                        elif key == "I":
-                            concepto, es_capacidad = "Intermedia", False
-                        elif key == "P":
-                            concepto, es_capacidad = "Punta", False
-                        elif key == "capacidad":
-                            concepto, es_capacidad = "Capacidad", True
-                        elif key == "simple":
-                            concepto, es_capacidad = "Variable", False
+                            col_headers = st.columns(5)
+                            col_headers[0].markdown("**Concepto**")
+                            col_headers[1].markdown(f"**Dic {anio_comparativo}**")
+                            col_headers[2].markdown(f"**Dic {anio_seleccionado}**")
+                            col_headers[3].markdown("**Variación**")
+                            col_headers[4].markdown("**Unidad**")
+                            
+                            for key, nombre, unidad in [("simple", "Variable (Energía)", "$/kWh"), ("capacidad", "Capacidad", "$/kW")]:
+                                datos = resultado["horarios"].get(key, {})
+                                cols = st.columns(5)
+                                
+                                if datos.get("actual") is not None:
+                                    anterior = datos.get("anterior")
+                                    actual = datos.get("actual")
+                                    variacion = datos.get("variacion_pct")
+                                    
+                                    cols[0].write(f"📊 {nombre}")
+                                    cols[1].write(f"${anterior:.4f}" if anterior else "N/D")
+                                    cols[2].write(f"${actual:.4f}")
+                                    if variacion is not None:
+                                        color = "🔴" if variacion > 0 else "🟢"
+                                        cols[3].write(f"{color} {variacion:+.2f}%")
+                                    else:
+                                        cols[3].write("N/D")
+                                    cols[4].write(unidad)
+                                else:
+                                    cols[0].write(f"📊 {nombre}")
+                                    cols[1].write("N/D")
+                                    cols[2].write("N/D")
+                                    cols[3].write("N/D")
+                                    cols[4].write("-")
+                        
+                        # === GRÁFICA COMPARATIVA ===
+                        st.markdown("##### 📊 Gráfica Comparativa")
+                        
+                        datos_kwh = []
+                        datos_kw = []
+                        
+                        for key, datos_cargo in resultado["horarios"].items():
+                            if datos_cargo.get("actual") is not None or datos_cargo.get("anterior") is not None:
+                                if key == "B":
+                                    concepto, es_capacidad = "Base", False
+                                elif key == "I":
+                                    concepto, es_capacidad = "Intermedia", False
+                                elif key == "P":
+                                    concepto, es_capacidad = "Punta", False
+                                elif key == "capacidad":
+                                    concepto, es_capacidad = "Capacidad", True
+                                elif key == "simple":
+                                    concepto, es_capacidad = "Variable", False
+                                else:
+                                    concepto, es_capacidad = key, False
+                                
+                                lista_destino = datos_kw if es_capacidad else datos_kwh
+                                
+                                if datos_cargo.get("anterior") is not None:
+                                    lista_destino.append({
+                                        "Concepto": concepto,
+                                        "Año": str(anio_comparativo),
+                                        "Valor": datos_cargo["anterior"]
+                                    })
+                                if datos_cargo.get("actual") is not None:
+                                    lista_destino.append({
+                                        "Concepto": concepto,
+                                        "Año": str(anio_seleccionado),
+                                        "Valor": datos_cargo["actual"]
+                                    })
+                        
+                        colores = {
+                            str(anio_comparativo): "#636EFA",
+                            str(anio_seleccionado): "#EF553B"
+                        }
+                        
+                        tiene_kwh = len(datos_kwh) > 0
+                        tiene_kw = len(datos_kw) > 0
+                        
+                        if tiene_kwh and tiene_kw:
+                            col_kwh, col_kw = st.columns([3, 1])
+                        elif tiene_kwh:
+                            col_kwh, col_kw = st.container(), None
+                        elif tiene_kw:
+                            col_kwh, col_kw = None, st.container()
                         else:
-                            concepto, es_capacidad = key, False
+                            col_kwh, col_kw = None, None
                         
-                        lista_destino = datos_kw if es_capacidad else datos_kwh
+                        if tiene_kwh and col_kwh:
+                            with col_kwh:
+                                df_kwh = pd.DataFrame(datos_kwh)
+                                fig_kwh = px.bar(df_kwh, x="Concepto", y="Valor", color="Año",
+                                                barmode="group", title="Variable ($/kWh)",
+                                                color_discrete_map=colores, text_auto=".2f")
+                                fig_kwh.update_layout(yaxis_title="$/kWh", xaxis_title="",
+                                                    legend_title="Año", height=300, margin=dict(t=40, b=40))
+                                fig_kwh.update_traces(hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>")
+                                st.plotly_chart(fig_kwh, use_container_width=True)
                         
-                        if datos_cargo.get("anterior") is not None:
-                            lista_destino.append({
-                                "Concepto": concepto,
-                                "Año": str(anio_comparativo),
-                                "Valor": datos_cargo["anterior"]
-                            })
-                        if datos_cargo.get("actual") is not None:
-                            lista_destino.append({
-                                "Concepto": concepto,
-                                "Año": str(anio_seleccionado),
-                                "Valor": datos_cargo["actual"]
-                            })
-                
-                colores = {
-                    str(anio_comparativo): "#636EFA",
-                    str(anio_seleccionado): "#EF553B"
-                }
-                
-                tiene_kwh = len(datos_kwh) > 0
-                tiene_kw = len(datos_kw) > 0
-                
-                if tiene_kwh and tiene_kw:
-                    col_kwh, col_kw = st.columns([3, 1])
-                elif tiene_kwh:
-                    col_kwh, col_kw = st.container(), None
-                elif tiene_kw:
-                    col_kwh, col_kw = None, st.container()
-                else:
-                    col_kwh, col_kw = None, None
-                
-                if tiene_kwh and col_kwh:
-                    with col_kwh:
-                        df_kwh = pd.DataFrame(datos_kwh)
-                        fig_kwh = px.bar(df_kwh, x="Concepto", y="Valor", color="Año",
-                                        barmode="group", title="Variable ($/kWh)",
-                                        color_discrete_map=colores, text_auto=".2f")
-                        fig_kwh.update_layout(yaxis_title="$/kWh", xaxis_title="",
-                                            legend_title="Año", height=300, margin=dict(t=40, b=40))
-                        fig_kwh.update_traces(hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>")
-                        st.plotly_chart(fig_kwh, use_container_width=True)
-                
-                if tiene_kw and col_kw:
-                    with col_kw:
-                        df_kw = pd.DataFrame(datos_kw)
-                        fig_kw = px.bar(df_kw, x="Concepto", y="Valor", color="Año",
-                                       barmode="group", title="Capacidad ($/kW)",
-                                       color_discrete_map=colores, text_auto=".2f")
-                        fig_kw.update_layout(yaxis_title="$/kW", xaxis_title="",
-                                           legend_title="Año", height=300, margin=dict(t=40, b=40),
-                                           showlegend=False)
-                        fig_kw.update_traces(hovertemplate="<b>%{x}</b><br>$%{y:.2f}/kW<extra></extra>")
-                        st.plotly_chart(fig_kw, use_container_width=True)
-                
-                # === DESGLOSE POR COMPONENTES ===
-                st.markdown("##### 🔍 Desglose por Componente")
-                
-                if resultado["es_horaria"]:
-                    horarios_analizar = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
-                    # Usar columnas para mostrar los 3 horarios lado a lado
-                    cols_desglose = st.columns(3)
-                    
-                    for idx, (horario_key, horario_nombre) in enumerate(horarios_analizar):
-                        with cols_desglose[idx]:
+                        if tiene_kw and col_kw:
+                            with col_kw:
+                                df_kw = pd.DataFrame(datos_kw)
+                                fig_kw = px.bar(df_kw, x="Concepto", y="Valor", color="Año",
+                                               barmode="group", title="Capacidad ($/kW)",
+                                               color_discrete_map=colores, text_auto=".2f")
+                                fig_kw.update_layout(yaxis_title="$/kW", xaxis_title="",
+                                                   legend_title="Año", height=300, margin=dict(t=40, b=40),
+                                                   showlegend=False)
+                                fig_kw.update_traces(hovertemplate="<b>%{x}</b><br>$%{y:.2f}/kW<extra></extra>")
+                                st.plotly_chart(fig_kw, use_container_width=True)
+                        
+                        # === DESGLOSE POR COMPONENTES ===
+                        st.markdown("##### 🔍 Desglose por Componente")
+                        
+                        if resultado["es_horaria"]:
+                            horarios_analizar = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
+                            cols_desglose = st.columns(3)
+                            for idx, (horario_key, horario_nombre) in enumerate(horarios_analizar):
+                                with cols_desglose[idx]:
+                                    componentes = calcular_variacion_componentes(
+                                        tarifa=tarifa, region=division_seleccionada,
+                                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                                        horario=horario_key, tipo_cargo="Variable"
+                                    )
+                                    if componentes:
+                                        datos_comp = [
+                                            {"Componente": c["nombre"], "Variación": c["var_absoluta"],
+                                             "Anterior": c["anterior"] or 0, "Actual": c["actual"] or 0,
+                                             "Var %": c["var_pct"] or 0}
+                                            for c in componentes if c["var_absoluta"] is not None
+                                        ]
+                                        if datos_comp:
+                                            df_comp = pd.DataFrame(datos_comp)
+                                            df_comp["Color"] = df_comp["Variación"].apply(
+                                                lambda x: "Subió" if x > 0 else "Bajó"
+                                            )
+                                            fig_comp = px.bar(
+                                                df_comp, y="Componente", x="Variación", color="Color",
+                                                orientation="h", title=f"{horario_nombre}",
+                                                color_discrete_map={"Subió": "#EF553B", "Bajó": "#00CC96"},
+                                                text=df_comp["Var %"].apply(lambda x: f"{x:+.1f}%")
+                                            )
+                                            fig_comp.update_layout(
+                                                xaxis_title="$/kWh", yaxis_title="",
+                                                height=250, showlegend=False,
+                                                margin=dict(l=10, r=10, t=30, b=30)
+                                            )
+                                            fig_comp.update_traces(
+                                                hovertemplate="<b>%{y}</b><br>Var: $%{x:.4f}<extra></extra>"
+                                            )
+                                            st.plotly_chart(fig_comp, use_container_width=True)
+                        else:
                             componentes = calcular_variacion_componentes(
                                 tarifa=tarifa, region=division_seleccionada,
                                 anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                                horario=horario_key, tipo_cargo="Variable"
+                                horario=None, tipo_cargo="Variable"
                             )
-                            
                             if componentes:
                                 datos_comp = [
                                     {"Componente": c["nombre"], "Variación": c["var_absoluta"],
@@ -460,178 +551,148 @@ if tarifas_seleccionadas:
                                      "Var %": c["var_pct"] or 0}
                                     for c in componentes if c["var_absoluta"] is not None
                                 ]
-                                
                                 if datos_comp:
                                     df_comp = pd.DataFrame(datos_comp)
                                     df_comp["Color"] = df_comp["Variación"].apply(
-                                        lambda x: "Subió" if x > 0 else "Bajó"
+                                        lambda x: "Subió 🔴" if x > 0 else "Bajó 🟢"
                                     )
-                                    
                                     fig_comp = px.bar(
                                         df_comp, y="Componente", x="Variación", color="Color",
-                                        orientation="h", title=f"{horario_nombre}",
-                                        color_discrete_map={"Subió": "#EF553B", "Bajó": "#00CC96"},
+                                        orientation="h", title="Variación por Componente",
+                                        color_discrete_map={"Subió 🔴": "#EF553B", "Bajó 🟢": "#00CC96"},
                                         text=df_comp["Var %"].apply(lambda x: f"{x:+.1f}%")
                                     )
                                     fig_comp.update_layout(
-                                        xaxis_title="$/kWh", yaxis_title="",
-                                        height=250, showlegend=False,
-                                        margin=dict(l=10, r=10, t=30, b=30)
-                                    )
-                                    fig_comp.update_traces(
-                                        hovertemplate="<b>%{y}</b><br>Var: $%{x:.4f}<extra></extra>"
+                                        xaxis_title="Variación ($/kWh)", yaxis_title="",
+                                        height=300, showlegend=True, legend_title="",
+                                        margin=dict(l=10, r=10, t=40, b=40)
                                     )
                                     st.plotly_chart(fig_comp, use_container_width=True)
-                else:
-                    # Tarifa simple: una sola gráfica de desglose
-                    componentes = calcular_variacion_componentes(
-                        tarifa=tarifa, region=division_seleccionada,
-                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                        horario=None, tipo_cargo="Variable"
-                    )
-                    
-                    if componentes:
-                        datos_comp = [
-                            {"Componente": c["nombre"], "Variación": c["var_absoluta"],
-                             "Anterior": c["anterior"] or 0, "Actual": c["actual"] or 0,
-                             "Var %": c["var_pct"] or 0}
-                            for c in componentes if c["var_absoluta"] is not None
-                        ]
                         
-                        if datos_comp:
-                            df_comp = pd.DataFrame(datos_comp)
-                            df_comp["Color"] = df_comp["Variación"].apply(
-                                lambda x: "Subió 🔴" if x > 0 else "Bajó 🟢"
-                            )
-                            
-                            fig_comp = px.bar(
-                                df_comp, y="Componente", x="Variación", color="Color",
-                                orientation="h", title="Variación por Componente",
-                                color_discrete_map={"Subió 🔴": "#EF553B", "Bajó 🟢": "#00CC96"},
-                                text=df_comp["Var %"].apply(lambda x: f"{x:+.1f}%")
-                            )
-                            fig_comp.update_layout(
-                                xaxis_title="Variación ($/kWh)", yaxis_title="",
-                                height=300, showlegend=True, legend_title="",
-                                margin=dict(l=10, r=10, t=40, b=40)
-                            )
-                            st.plotly_chart(fig_comp, use_container_width=True)
-                
-                # === KPI DE PROMEDIO ANUAL (HU-3.1) ===
-                st.markdown("##### 📊 Promedio Anual")
-                
-                if resultado["es_horaria"]:
-                    # Para tarifas horarias: Cargo Fijo + 3 horarios
-                    # Primero: Cargo Fijo (aplica a todas las tarifas)
-                    prom_fijo = calcular_variacion_promedio_anual(
-                        tarifa=tarifa, region=division_seleccionada,
-                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                        horario=None, tipo_cargo="Fijo"
-                    )
-                    
-                    cols_fijo_horarios = st.columns([1, 1, 1, 1])
-                    
-                    with cols_fijo_horarios[0]:
-                        if prom_fijo["disponible"]:
-                            st.metric(
-                                label="📋 Cargo Fijo",
-                                value=f"${prom_fijo['promedio_actual']:.2f}/mes",
-                                delta=f"{prom_fijo['variacion_pct']:+.1f}%",
-                                delta_color="inverse",
-                                help=f"Promedio de {prom_fijo['num_meses_comunes']} meses. Anterior: ${prom_fijo['promedio_anterior']:.2f}"
-                            )
-                        else:
-                            st.metric(label="📋 Cargo Fijo", value="N/D", delta="Sin datos")
-                    
-                    # Luego: 3 KPIs por horario (HU-3.3)
-                    horarios_prom = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
-                    
-                    for idx, (horario_key, horario_nombre) in enumerate(horarios_prom):
-                        with cols_fijo_horarios[idx + 1]:
-                            prom_data = calcular_variacion_promedio_anual(
+                        # === KPI DE PROMEDIO ANUAL (HU-3.1) ===
+                        st.markdown("##### 📊 Promedio Anual")
+                        
+                        if resultado["es_horaria"]:
+                            prom_fijo = calcular_variacion_promedio_anual(
                                 tarifa=tarifa, region=division_seleccionada,
                                 anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                                horario=horario_key, tipo_cargo="Variable"
+                                horario=None, tipo_cargo="Fijo"
                             )
-                            
-                            if prom_data["disponible"]:
-                                st.metric(
-                                    label=f"⏰ {horario_nombre}",
-                                    value=f"${prom_data['promedio_actual']:.4f}/kWh",
-                                    delta=f"{prom_data['variacion_pct']:+.1f}%",
-                                    delta_color="inverse",
-                                    help=f"Promedio de {prom_data['num_meses_comunes']} meses. Anterior: ${prom_data['promedio_anterior']:.4f}"
+                            cols_fijo_horarios = st.columns([1, 1, 1, 1])
+                            with cols_fijo_horarios[0]:
+                                if prom_fijo["disponible"]:
+                                    st.metric(
+                                        label="📋 Cargo Fijo",
+                                        value=f"${prom_fijo['promedio_actual']:.2f}/mes",
+                                        delta=f"{prom_fijo['variacion_pct']:+.1f}%",
+                                        delta_color="inverse",
+                                        help=f"Promedio de {prom_fijo['num_meses_comunes']} meses. Anterior: ${prom_fijo['promedio_anterior']:.2f}"
+                                    )
+                                else:
+                                    st.metric(label="📋 Cargo Fijo", value="N/D", delta="Sin datos")
+                            horarios_prom = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
+                            for idx, (horario_key, horario_nombre) in enumerate(horarios_prom):
+                                with cols_fijo_horarios[idx + 1]:
+                                    prom_data = calcular_variacion_promedio_anual(
+                                        tarifa=tarifa, region=division_seleccionada,
+                                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                                        horario=horario_key, tipo_cargo="Variable"
+                                    )
+                                    if prom_data["disponible"]:
+                                        st.metric(
+                                            label=f"⏰ {horario_nombre}",
+                                            value=f"${prom_data['promedio_actual']:.4f}/kWh",
+                                            delta=f"{prom_data['variacion_pct']:+.1f}%",
+                                            delta_color="inverse",
+                                            help=f"Promedio de {prom_data['num_meses_comunes']} meses. Anterior: ${prom_data['promedio_anterior']:.4f}"
+                                        )
+                                    else:
+                                        st.metric(label=f"⏰ {horario_nombre}", value="N/D", delta="Sin datos")
+                            st.caption("🕐 **Horarios típicos:** Base (0:00-6:00) | Intermedia (6:00-18:00, 22:00-0:00) | Punta (18:00-22:00)")
+                        else:
+                            cols_simple = st.columns(2)
+                            with cols_simple[0]:
+                                prom_fijo = calcular_variacion_promedio_anual(
+                                    tarifa=tarifa, region=division_seleccionada,
+                                    anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                                    horario=None, tipo_cargo="Fijo"
                                 )
-                            else:
-                                st.metric(label=f"⏰ {horario_nombre}", value="N/D", delta="Sin datos")
-                    
-                    # Leyenda de horarios típicos (HU-3.3)
-                    st.caption("🕐 **Horarios típicos:** Base (0:00-6:00) | Intermedia (6:00-18:00, 22:00-0:00) | Punta (18:00-22:00)")
-                else:
-                    # Para tarifas simples: 2 KPIs (Fijo y Variable) - HU-3.5
-                    cols_simple = st.columns(2)
-                    
-                    # KPI Cargo Fijo
-                    with cols_simple[0]:
-                        prom_fijo = calcular_variacion_promedio_anual(
-                            tarifa=tarifa, region=division_seleccionada,
-                            anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                            horario=None, tipo_cargo="Fijo"
-                        )
+                                if prom_fijo["disponible"]:
+                                    st.metric(
+                                        label="📋 Promedio Cargo Fijo",
+                                        value=f"${prom_fijo['promedio_actual']:.2f}/mes",
+                                        delta=f"{prom_fijo['variacion_pct']:+.1f}%",
+                                        delta_color="inverse",
+                                        help=f"Promedio de {prom_fijo['num_meses_comunes']} meses. Anterior: ${prom_fijo['promedio_anterior']:.2f}"
+                                    )
+                                else:
+                                    st.metric(label="📋 Promedio Cargo Fijo", value="N/D", delta="Sin datos")
+                            with cols_simple[1]:
+                                prom_data = calcular_variacion_promedio_anual(
+                                    tarifa=tarifa, region=division_seleccionada,
+                                    anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                                    horario=None, tipo_cargo="Variable"
+                                )
+                                if prom_data["disponible"]:
+                                    st.metric(
+                                        label="⚡ Promedio Variable (Energía)",
+                                        value=f"${prom_data['promedio_actual']:.4f}/kWh",
+                                        delta=f"{prom_data['variacion_pct']:+.1f}%",
+                                        delta_color="inverse",
+                                        help=f"Promedio de {prom_data['num_meses_comunes']} meses. Anterior: ${prom_data['promedio_anterior']:.4f}"
+                                    )
+                                else:
+                                    st.metric(label="⚡ Promedio Variable", value="N/D", delta="Sin datos")
                         
-                        if prom_fijo["disponible"]:
-                            st.metric(
-                                label="📋 Promedio Cargo Fijo",
-                                value=f"${prom_fijo['promedio_actual']:.2f}/mes",
-                                delta=f"{prom_fijo['variacion_pct']:+.1f}%",
-                                delta_color="inverse",
-                                help=f"Promedio de {prom_fijo['num_meses_comunes']} meses. Anterior: ${prom_fijo['promedio_anterior']:.2f}"
-                            )
-                        else:
-                            st.metric(label="📋 Promedio Cargo Fijo", value="N/D", delta="Sin datos")
-                    
-                    # KPI Cargo Variable
-                    with cols_simple[1]:
-                        prom_data = calcular_variacion_promedio_anual(
-                            tarifa=tarifa, region=division_seleccionada,
-                            anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                            horario=None, tipo_cargo="Variable"
-                        )
+                        # === GRÁFICA DE TENDENCIA MENSUAL (HU-3.4) ===
+                        st.markdown("##### 📈 Tendencia Mensual")
                         
-                        if prom_data["disponible"]:
-                            st.metric(
-                                label="⚡ Promedio Variable (Energía)",
-                                value=f"${prom_data['promedio_actual']:.4f}/kWh",
-                                delta=f"{prom_data['variacion_pct']:+.1f}%",
-                                delta_color="inverse",
-                                help=f"Promedio de {prom_data['num_meses_comunes']} meses. Anterior: ${prom_data['promedio_anterior']:.4f}"
-                            )
+                        if resultado["es_horaria"]:
+                            horarios_tendencia = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
+                            cols_tendencia = st.columns(3)
+                            for idx, (horario_key, horario_nombre) in enumerate(horarios_tendencia):
+                                with cols_tendencia[idx]:
+                                    datos_tend = get_datos_tendencia_comparativa(
+                                        tarifa=tarifa, region=division_seleccionada,
+                                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
+                                        horario=horario_key, tipo_cargo="Variable"
+                                    )
+                                    if datos_tend:
+                                        df_tend = pd.DataFrame(datos_tend)
+                                        df_tend = df_tend.sort_values("Mes_Num")
+                                        fig_tend = px.line(
+                                            df_tend, x="Mes", y="Valor", color="Año",
+                                            title=f"{horario_nombre}",
+                                            markers=True,
+                                            color_discrete_map={
+                                                str(anio_comparativo): "#636EFA",
+                                                str(anio_seleccionado): "#EF553B"
+                                            }
+                                        )
+                                        fig_tend.update_layout(
+                                            xaxis_title="", yaxis_title="$/kWh",
+                                            height=280, showlegend=True,
+                                            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+                                            margin=dict(l=10, r=10, t=50, b=30)
+                                        )
+                                        fig_tend.update_traces(
+                                            hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>"
+                                        )
+                                        st.plotly_chart(fig_tend, use_container_width=True)
+                                    else:
+                                        st.info(f"Sin datos para {horario_nombre}")
                         else:
-                            st.metric(label="⚡ Promedio Variable", value="N/D", delta="Sin datos")
-                
-                # === GRÁFICA DE TENDENCIA MENSUAL (HU-3.4) ===
-                st.markdown("##### 📈 Tendencia Mensual")
-                
-                if resultado["es_horaria"]:
-                    # Para tarifas horarias: mostrar tendencia de cada horario
-                    horarios_tendencia = [("B", "Base"), ("I", "Intermedia"), ("P", "Punta")]
-                    cols_tendencia = st.columns(3)
-                    
-                    for idx, (horario_key, horario_nombre) in enumerate(horarios_tendencia):
-                        with cols_tendencia[idx]:
                             datos_tend = get_datos_tendencia_comparativa(
                                 tarifa=tarifa, region=division_seleccionada,
                                 anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                                horario=horario_key, tipo_cargo="Variable"
+                                horario=None, tipo_cargo="Variable"
                             )
-                            
                             if datos_tend:
                                 df_tend = pd.DataFrame(datos_tend)
                                 df_tend = df_tend.sort_values("Mes_Num")
-                                
                                 fig_tend = px.line(
                                     df_tend, x="Mes", y="Valor", color="Año",
-                                    title=f"{horario_nombre}",
+                                    title="Evolución Mensual Variable (Energía)",
                                     markers=True,
                                     color_discrete_map={
                                         str(anio_comparativo): "#636EFA",
@@ -639,52 +700,39 @@ if tarifas_seleccionadas:
                                     }
                                 )
                                 fig_tend.update_layout(
-                                    xaxis_title="", yaxis_title="$/kWh",
-                                    height=280, showlegend=True,
+                                    xaxis_title="Mes", yaxis_title="$/kWh",
+                                    height=350, showlegend=True,
                                     legend=dict(orientation="h", yanchor="bottom", y=1.02),
-                                    margin=dict(l=10, r=10, t=50, b=30)
+                                    margin=dict(l=10, r=10, t=50, b=40)
                                 )
                                 fig_tend.update_traces(
                                     hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>"
                                 )
                                 st.plotly_chart(fig_tend, use_container_width=True)
                             else:
-                                st.info(f"Sin datos para {horario_nombre}")
-                else:
-                    # Para tarifas simples: una sola gráfica
-                    datos_tend = get_datos_tendencia_comparativa(
-                        tarifa=tarifa, region=division_seleccionada,
-                        anio_actual=anio_seleccionado, anio_anterior=anio_comparativo,
-                        horario=None, tipo_cargo="Variable"
-                    )
-                    
-                    if datos_tend:
-                        df_tend = pd.DataFrame(datos_tend)
-                        df_tend = df_tend.sort_values("Mes_Num")
-                        
-                        fig_tend = px.line(
-                            df_tend, x="Mes", y="Valor", color="Año",
-                            title="Evolución Mensual Variable (Energía)",
-                            markers=True,
-                            color_discrete_map={
-                                str(anio_comparativo): "#636EFA",
-                                str(anio_seleccionado): "#EF553B"
-                            }
-                        )
-                        fig_tend.update_layout(
-                            xaxis_title="Mes", yaxis_title="$/kWh",
-                            height=350, showlegend=True,
-                            legend=dict(orientation="h", yanchor="bottom", y=1.02),
-                            margin=dict(l=10, r=10, t=50, b=40)
-                        )
-                        fig_tend.update_traces(
-                            hovertemplate="<b>%{x}</b><br>$%{y:.4f}/kWh<extra></extra>"
-                        )
-                        st.plotly_chart(fig_tend, use_container_width=True)
+                                st.info("Sin datos de tendencia mensual")
                     else:
-                        st.info("Sin datos de tendencia mensual")
-            else:
-                st.warning(f"No hay datos de diciembre para {tarifa} en {anio_seleccionado} o {anio_comparativo}")
+                        st.warning(f"No hay datos de diciembre para {tarifa} en {anio_seleccionado} o {anio_comparativo}")
+        else:
+            st.info("👆 Selecciona Estado, Municipio, Tarifa y Año para ver el análisis de comportamiento")
+    
+    # Tab 2: Generar Histórico (Feature 5 - placeholder para HU-5.1)
+    with modo_tabs[1]:
+        if division_seleccionada and tarifas_seleccionadas and anio_seleccionado:
+            st.info("🚧 Esta funcionalidad se implementará en HU-5.1: Tabla Histórica de Tarifas por Rango de 12 Meses")
+            st.markdown("""
+            **Próximamente:** Podrás generar una tabla con el histórico completo de una tarifa 
+            y división en un rango de 12 meses, con opción de exportar a CSV.
+            """)
+        else:
+            st.info("👆 Selecciona Estado, Municipio, Tarifa y Año para generar el histórico")
+    
+    # Tab 3: Captura de Datos de Recibo (Feature 6 - placeholder)
+    with modo_tabs[2]:
+        st.info("🚧 Esta funcionalidad se implementará en el Feature 6: Captura de Datos de Recibo")
+        st.markdown("""
+        **Próximamente:** Podrás capturar y analizar datos de recibos de CFE.
+        """)
 else:
     # Selector deshabilitado si no hay tarifas
     st.selectbox(
@@ -693,15 +741,19 @@ else:
         disabled=True,
         key="selector_anio_disabled"
     )
-
-# Nota: Sección "Ver detalles de los datos" eliminada (HU-3.5)
     
-    st.markdown("#### Estadísticas completas")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.json(stats["geografia"])
-    with col2:
-        st.json(stats["tarifas"])
+    # Mostrar tabs incluso si no hay selección completa
+    st.markdown("---")
+    modo_tabs = st.tabs(["📊 Análisis de Comportamiento", "📋 Generar Histórico", "📥 Captura de Datos"])
+    
+    with modo_tabs[0]:
+        st.info("👆 Completa los selectores arriba para ver el análisis de comportamiento")
+    
+    with modo_tabs[1]:
+        st.info("👆 Completa los selectores arriba para generar el histórico")
+    
+    with modo_tabs[2]:
+        st.info("🚧 Esta funcionalidad se implementará en el Feature 6: Captura de Datos de Recibo")
 
 # Footer
 st.markdown("---")

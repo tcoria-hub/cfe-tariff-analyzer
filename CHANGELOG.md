@@ -6,6 +6,27 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2026-02-18]
+
+### HU-5.2: Navegación entre Modos de Análisis
+**Tiempo de ciclo:** ~2 horas
+
+#### Implementado
+- Navegación con tres tabs: Análisis de Comportamiento, Generar Histórico, Captura de Datos de Recibo.
+- Selectores comunes (Estado, Municipio, Tarifa, Año) fuera de los tabs para acceso desde cualquier modo.
+- Persistencia de selecciones entre modos con `st.session_state`.
+- Contenido existente (Features 2 y 3) dentro del tab "Análisis de Comportamiento".
+- Placeholders para Generar Histórico (HU-5.1) y Captura de Datos (Feature 6).
+
+#### Decisiones Clave
+- Tabs en área principal para no ocultar selectores; en HU-5.1 se podrá revisar si el selector mes/año del histórico va dentro del tab o común.
+- Resumen y tabs solo cuando hay tarifas seleccionadas; corrección de flujo if/else y de indentación del bloque de análisis.
+
+#### Archivos Modificados
+- `scripts/app.py` – Navegación con tabs, session_state para selectores, refactor de flujo e indentación.
+
+---
+
 ## [2026-02-06]
 
 ### HU-1.5: Descripción Completa de Tarifa Seleccionada
