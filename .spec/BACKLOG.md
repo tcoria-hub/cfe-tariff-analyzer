@@ -1,6 +1,6 @@
 # BACKLOG - CFE Tariff Analyzer MVP
 
-> **Última actualización:** 2026-02-06
+> **Última actualización:** 2026-02-20
 > **Versión:** 1.0.0
 
 ## Estado del Proyecto
@@ -11,6 +11,7 @@
 - ✅ Feature 3: Análisis de Promedio Anual e Inteligencia Horaria
 - ⏳ Feature 4: Operación y Mantenimiento
 - ✅ Feature 5: Histórico de Tarifas por Rango de 12 Meses
+- ⏳ Feature 6: Captura Manual y Exportación de Recibos de Luz CFE
 
 ---
 
@@ -759,6 +760,186 @@ Y: Los selectores de Estado/Municipio/Tarifa mantienen sus valores si aplican
 
 ---
 
+## FEATURE 6: Captura Manual y Exportación de Recibos de Luz CFE
+
+### Descripción del Feature
+
+- **Para:** Usuario capturista y analista
+- **Que:** Necesita capturar manualmente la información de recibos de luz CFE y exportar el histórico completo
+- **Esta épica:** Permite captura por bloques con campos dinámicos según tarifa, almacenamiento inmutable y exportación a CSV
+- **Esperamos:** Que los recibos queden guardados de forma definitiva y se pueda exportar todo el histórico a CSV para análisis externo
+- **Sabremos que hemos tenido éxito cuando:** Se puedan capturar recibos de distintas tarifas sin conflicto, sin edición/eliminación posterior, y la exportación incluya todos los registros con campos no aplicables vacíos
+
+**Alcance:** Incluye captura manual por bloques, activación dinámica de campos según tarifa, validaciones mínimas, almacenamiento inmutable y exportación completa a CSV. Excluye consulta visual del histórico, edición/eliminación, cálculos automáticos y OCR.
+
+**Notas de arquitectura (2026-02-20):**
+- **Persistencia:** CSV en repositorio (ej. `data/recibos_capturados.csv`) actualizado vía API de GitHub (alineado con HU-4.2).
+- **Esquemas por tarifa:** Se construyen bajo demanda: al guardar el primer recibo de una tarifa se deriva y persiste el esquema de campos para esa tarifa; recibos posteriores usan ese formulario.
+
+---
+
+### Epic 6.1 – Captura y Almacenamiento del Recibo
+
+### ✅ Historia de Usuario 6.1: Captura de datos generales del recibo
+
+**Como:** Usuario capturista  
+**Quiero:** Registrar los datos generales del recibo  
+**Para poder:** Identificar de forma única el suministro y el periodo facturado
+
+#### Criterios de Aceptación
+
+1. Los datos generales se capturan en un bloque inicial
+2. La tarifa es obligatoria
+3. El número de servicio es obligatorio
+4. El periodo facturado es obligatorio
+5. No se permite avanzar si falta algún dato obligatorio
+
+#### Casos de Prueba
+
+- **CP-6.1.1:** Sin tarifa seleccionada no se puede continuar al bloque de datos variables
+- **CP-6.1.2:** Sin número de servicio no se habilita el botón Guardar
+- **CP-6.1.3:** Sin periodo facturado no se permite guardar
+
+---
+
+### ⏳ Historia de Usuario 6.2: Activación dinámica de campos por esquema tarifario
+
+**Como:** Usuario capturista  
+**Quiero:** Que el sistema muestre únicamente los campos correspondientes a la tarifa seleccionada  
+**Para poder:** Evitar capturar información que no existe en el recibo
+
+#### Criterios de Aceptación
+
+1. Al seleccionar una tarifa, se habilita exclusivamente su bloque de campos
+2. Los campos de otras tarifas no son visibles
+3. Si se cambia la tarifa antes de guardar, los campos previamente capturados se reinician
+4. Cada tarifa define su propio conjunto de campos obligatorios (esquemas construidos bajo demanda)
+
+#### Casos de Prueba
+
+- **CP-6.2.1:** Seleccionar PDBT muestra solo los campos definidos para PDBT
+- **CP-6.2.2:** Cambiar de PDBT a GDMTH antes de guardar limpia los campos variables y muestra los de GDMTH
+- **CP-6.2.3:** Primera vez que se usa una tarifa: se permite definir campos al capturar y se persiste el esquema
+
+---
+
+### ⏳ Historia de Usuario 6.3: Captura de datos variables según la tarifa
+
+**Como:** Usuario capturista  
+**Quiero:** Ingresar los datos específicos del esquema tarifario  
+**Para poder:** Reflejar fielmente la información del recibo físico
+
+#### Criterios de Aceptación
+
+1. Todos los campos obligatorios del esquema deben completarse
+2. Los campos numéricos solo aceptan valores numéricos
+3. Los campos monetarios permiten hasta dos decimales
+4. El sistema no realiza cálculos automáticos
+
+#### Casos de Prueba
+
+- **CP-6.3.1:** Campo numérico rechaza texto y muestra error
+- **CP-6.3.2:** Campo monetario acepta máximo 2 decimales
+- **CP-6.3.3:** No hay cálculo automático de totales ni derivados
+
+---
+
+### ⏳ Historia de Usuario 6.4: Validaciones mínimas antes del guardado
+
+**Como:** Usuario capturista  
+**Quiero:** Que el sistema valide la información básica  
+**Para poder:** Asegurar consistencia en los datos almacenados
+
+#### Criterios de Aceptación
+
+1. No se permite guardar si existen campos obligatorios vacíos
+2. No se aceptan valores negativos
+3. El factor de potencia (cuando aplique) debe estar entre 0 y 1
+4. Los mensajes de error son claros y por campo
+
+#### Casos de Prueba
+
+- **CP-6.4.1:** Guardar con campo obligatorio vacío muestra error en ese campo
+- **CP-6.4.2:** Valor negativo en campo numérico muestra error
+- **CP-6.4.3:** Factor de potencia &gt; 1 o &lt; 0 muestra error
+
+---
+
+### ⏳ Historia de Usuario 6.5: Guardado definitivo e inmutable del recibo
+
+**Como:** Usuario capturista  
+**Quiero:** Guardar el recibo de forma definitiva  
+**Para poder:** Preservar la integridad del histórico
+
+#### Criterios de Aceptación
+
+1. Al guardar, el registro queda almacenado como inmutable
+2. No existe opción de edición posterior
+3. No existe opción de eliminación
+4. Se registra fecha y hora de captura
+5. El sistema confirma explícitamente el guardado exitoso
+
+#### Casos de Prueba
+
+- **CP-6.5.1:** Tras guardar se muestra mensaje de confirmación
+- **CP-6.5.2:** No hay botón ni flujo para editar o eliminar un recibo guardado
+- **CP-6.5.3:** Cada registro incluye timestamp de captura
+
+#### Notas Técnicas
+
+- Persistencia: CSV en repo (`data/recibos_capturados.csv`) vía API de GitHub (reutilizar o extender lógica de HU-4.2)
+- Esquemas por tarifa: archivo en repo (ej. `data/04_esquemas_recibo_por_tarifa.json`) que se actualiza bajo demanda al guardar el primer recibo de cada tarifa
+
+---
+
+### Epic 6.2 – Exportación del Histórico
+
+### ⏳ Historia de Usuario 6.6: Exportación completa del histórico a CSV
+
+**Como:** Analista  
+**Quiero:** Exportar todos los recibos capturados a un archivo CSV  
+**Para poder:** Analizarlos en herramientas externas
+
+**Consideración funcional:** Los recibos no comparten todos los mismos campos; la estructura depende de la tarifa.
+
+#### Criterios de Aceptación
+
+1. El CSV incluye todas las columnas de datos generales
+2. El CSV incluye todas las columnas posibles de datos tarifarios (unión de esquemas)
+3. Para cada recibo, los campos no aplicables se exportan como valores vacíos
+4. El archivo contiene la totalidad de los registros almacenados
+5. El formato es compatible con Excel (UTF-8, separador estándar)
+6. La exportación no altera la información original
+
+#### Casos de Prueba
+
+- **CP-6.6.1:** Exportar con 0 recibos genera CSV con solo encabezados o mensaje apropiado
+- **CP-6.6.2:** Exportar con recibos de varias tarifas genera columnas para todos los campos; celdas no aplicables vacías
+- **CP-6.6.3:** El CSV abre correctamente en Excel con caracteres correctos
+
+---
+
+### Reglas Globales del Feature 6
+
+| Regla | Definición |
+|-------|------------|
+| Captura | 100% manual |
+| Estructura de datos | Variable según tarifa (esquemas bajo demanda) |
+| Edición posterior | No permitida |
+| Eliminación de registros | No permitida |
+| Exportación | Histórico completo |
+| Formato de salida | CSV |
+
+### Definición de Hecho (DoD)
+
+- Se pueden capturar recibos de distintas tarifas sin conflicto
+- Ningún recibo puede modificarse después de guardarse
+- La exportación a CSV incluye todos los registros
+- Los campos no aplicables se exportan vacíos
+- El Feature 6 cumple su objetivo sin dependencias funcionales adicionales
+
+---
+
 ## Resumen de Historias
 
 | Feature | HU | Título | Estado |
@@ -783,5 +964,11 @@ Y: Los selectores de Estado/Municipio/Tarifa mantienen sus valores si aplican
 | 4 | 4.3 | Gestión de Catálogo de Regiones | ⏳ |
 | 5 | 5.1 | Tabla Histórica de Tarifas por Rango de 12 Meses | 🔄 |
 | 5 | 5.2 | Navegación entre Modos de Análisis | ✅ |
+| 6 | 6.1 | Captura de datos generales del recibo | ✅ |
+| 6 | 6.2 | Activación dinámica de campos por esquema tarifario | ⏳ |
+| 6 | 6.3 | Captura de datos variables según la tarifa | ⏳ |
+| 6 | 6.4 | Validaciones mínimas antes del guardado | ⏳ |
+| 6 | 6.5 | Guardado definitivo e inmutable del recibo | ⏳ |
+| 6 | 6.6 | Exportación completa del histórico a CSV | ⏳ |
 
-**Total:** 20 Historias de Usuario en 6 Features
+**Total:** 26 Historias de Usuario en 7 Features

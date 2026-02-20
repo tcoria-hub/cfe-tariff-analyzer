@@ -6,6 +6,27 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2026-02-20]
+
+### HU-6.1: Captura de datos generales del recibo
+**Tiempo de ciclo:** < 1 día
+
+#### Implementado
+- Bloque "Datos generales del recibo" en el tab "Captura de Datos" (Feature 6).
+- Campos obligatorios: Tarifa (selectbox con lista de `get_tarifas_disponibles()`), Número de servicio (text_input), Periodo facturado (mes + año, 2015–2030).
+- Validación: botón "Guardar recibo" deshabilitado si falta algún obligatorio; mensaje claro con `st.warning`.
+- Persistencia del formulario en `st.session_state` entre cambios de tab.
+- Función helper `_render_formulario_datos_generales_recibo(key_suffix)` para reutilizar el formulario en ambas ramas del tab.
+
+#### Decisiones Clave
+- Formulario en función con `key_suffix` para keys únicos de Streamlit en cada rama (con/sin tarifas seleccionadas).
+- Periodo facturado = mes + año; guardado real se implementará en HU-6.5.
+
+#### Archivos Modificados
+- `scripts/app.py` – session_state recibo_*; `_render_formulario_datos_generales_recibo()`; reemplazo del placeholder del tab Captura de Datos.
+
+---
+
 ## [2026-02-19]
 
 ### HU-5.1: Tabla Histórica de Tarifas por Rango de 12 Meses

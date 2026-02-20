@@ -29,6 +29,80 @@ from data_loader import (
     MESES_NOMBRES,
 )
 
+
+def _render_formulario_datos_generales_recibo(key_suffix: str = "") -> bool:
+    """HU-6.1: Bloque de datos generales del recibo. Devuelve True si todos los obligatorios están completos."""
+    st.subheader("📥 Datos generales del recibo")
+    st.caption("Identificación del suministro y periodo facturado. Todos los campos son obligatorios.")
+    df_tarifas_recibo = get_tarifas_disponibles()
+    opciones_tarifa = ["Selecciona una tarifa"]
+    tarifa_map = {}
+    for _, row in df_tarifas_recibo.iterrows():
+        opcion = f"{row['tarifa']} - {row['descripcion']}"
+        opciones_tarifa.append(opcion)
+        tarifa_map[opcion] = row["tarifa"]
+    idx_tarifa = 0
+    if st.session_state.recibo_tarifa:
+        for i, op in enumerate(opciones_tarifa):
+            if op != "Selecciona una tarifa" and tarifa_map.get(op) == st.session_state.recibo_tarifa:
+                idx_tarifa = i
+                break
+    tarifa_opcion = st.selectbox(
+        "Tarifa",
+        options=opciones_tarifa,
+        index=idx_tarifa,
+        key=f"recibo_select_tarifa{key_suffix}",
+        help="Tarifa del recibo CFE (obligatorio)",
+    )
+    st.session_state.recibo_tarifa = tarifa_map.get(tarifa_opcion, "") if tarifa_opcion != "Selecciona una tarifa" else ""
+    numero_servicio = st.text_input(
+        "Número de servicio",
+        value=st.session_state.recibo_numero_servicio,
+        key=f"recibo_numero_servicio{key_suffix}",
+        placeholder="Ej: 1234567890",
+        help="Número de servicio del suministro (obligatorio)",
+    )
+    st.session_state.recibo_numero_servicio = (numero_servicio.strip() if numero_servicio else "")
+    anios_recibo = list(range(2015, 2031))
+    col_mes, col_anio = st.columns(2)
+    with col_mes:
+        idx_mes = 0
+        if st.session_state.recibo_mes and st.session_state.recibo_mes in MESES_NOMBRES:
+            idx_mes = MESES_NOMBRES.index(st.session_state.recibo_mes)
+        mes_periodo = st.selectbox(
+            "Mes del periodo facturado",
+            options=[""] + MESES_NOMBRES,
+            index=idx_mes + 1 if st.session_state.recibo_mes else 0,
+            key=f"recibo_mes{key_suffix}",
+            help="Mes que corresponde al periodo del recibo (obligatorio)",
+        )
+        st.session_state.recibo_mes = (mes_periodo.strip() if mes_periodo else "")
+    with col_anio:
+        idx_anio = len(anios_recibo) - 1
+        if st.session_state.recibo_anio and st.session_state.recibo_anio in anios_recibo:
+            idx_anio = anios_recibo.index(st.session_state.recibo_anio)
+        anio_periodo = st.selectbox(
+            "Año del periodo facturado",
+            options=[None] + anios_recibo,
+            index=idx_anio + 1 if st.session_state.recibo_anio else 0,
+            format_func=lambda x: str(x) if x is not None else "Selecciona año",
+            key=f"recibo_anio{key_suffix}",
+            help="Año del periodo facturado (obligatorio)",
+        )
+        st.session_state.recibo_anio = anio_periodo
+    datos_completos = (
+        bool(st.session_state.recibo_tarifa)
+        and bool(st.session_state.recibo_numero_servicio)
+        and bool(st.session_state.recibo_mes)
+        and st.session_state.recibo_anio is not None
+    )
+    if not datos_completos:
+        st.warning("Completa tarifa, número de servicio y periodo facturado (mes y año) para poder continuar.")
+    if st.button("Guardar recibo", type="primary", disabled=not datos_completos, key=f"recibo_btn_guardar{key_suffix}"):
+        st.info("El guardado definitivo se implementará en HU-6.5. Los datos generales están listos.")
+    return datos_completos
+
+
 # Configuración de la página
 st.set_page_config(
     page_title="CFE - Analizador de Tarifas",
@@ -64,6 +138,15 @@ if 'tarifas_seleccionadas' not in st.session_state:
     st.session_state.tarifas_seleccionadas = []
 if 'anio_seleccionado' not in st.session_state:
     st.session_state.anio_seleccionado = None
+# HU-6.1: Estado del formulario de captura de recibos
+if 'recibo_tarifa' not in st.session_state:
+    st.session_state.recibo_tarifa = ""
+if 'recibo_numero_servicio' not in st.session_state:
+    st.session_state.recibo_numero_servicio = ""
+if 'recibo_mes' not in st.session_state:
+    st.session_state.recibo_mes = ""
+if 'recibo_anio' not in st.session_state:
+    st.session_state.recibo_anio = None
 
 # Mensaje de bienvenida
 st.header("Bienvenido")
@@ -822,12 +905,9 @@ if tarifas_seleccionadas:
         else:
             st.info("👆 Selecciona Estado, Municipio, Tarifa y Año para generar el histórico")
     
-    # Tab 3: Captura de Datos de Recibo (Feature 6 - placeholder)
+    # Tab 3: Captura de Datos de Recibo (Feature 6 - HU-6.1)
     with modo_tabs[2]:
-        st.info("🚧 Esta funcionalidad se implementará en el Feature 6: Captura de Datos de Recibo")
-        st.markdown("""
-        **Próximamente:** Podrás capturar y analizar datos de recibos de CFE.
-        """)
+        _render_formulario_datos_generales_recibo(key_suffix="")
 else:
     # Selector deshabilitado si no hay tarifas
     st.selectbox(
@@ -848,7 +928,7 @@ else:
         st.info("👆 Completa los selectores arriba para generar el histórico")
     
     with modo_tabs[2]:
-        st.info("🚧 Esta funcionalidad se implementará en el Feature 6: Captura de Datos de Recibo")
+        _render_formulario_datos_generales_recibo(key_suffix="_alt")
 
 # Footer
 st.markdown("---")
